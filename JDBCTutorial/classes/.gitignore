@@ -1,0 +1,5 @@
+
+/com/
+*.ini
+*.jar
+/hibernate.cfg.xml
