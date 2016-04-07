@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project JDBCTutorial">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <!--define folder properties-->
+    <property name="dir.buildfile" value="."/>
+    <property name="dir.workspace" value="${dir.buildfile}/.."/>
+    <property name="dir.jarfile" value="C:/Users/Phil/OneDrive/TradsCoach"/>
+    <target name="create_run_jar">
+        <jar destfile="${dir.jarfile}/TradeCoach.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="com.gui.GUI"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="${dir.buildfile}/classes"/>
+            <fileset dir="${dir.buildfile}/bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_cs.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_de_DE.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_es.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_fr.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_hu.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_it.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_ja_JP.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_ko_KR.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_pl.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_pt_BR.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_ru.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_zh_CN.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derbyLocale_zh_TW.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Phil/Downloads/eclipse-jee-mars-R-win32-x86_64/eclipse/db-derby-10.11.1.1-bin/lib/derby.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/lib/JDBCTutorial.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.workspace}/TradeCoach/lib/commons-lang-2.6.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.workspace}/TradeCoach/lib/commons-lang-2.6-javadoc.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.workspace}/TradeCoach/lib/commons-lang-2.6-sources.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.workspace}/TradeCoach/lib/commons-math3-3.0.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/commons-lang-2.6-javadoc.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/commons-lang-2.6-sources.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/commons-lang-2.6.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/commons-math3-3.0.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/derby.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/derbyclient.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/derbynet.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/derbytools.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/JDBCTutorial.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jdom-2.0.5-contrib.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jdom-2.0.5-sources.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jdom-2.0.5.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/joda-time-2.4-javadoc.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/joda-time-2.4-sources.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/joda-time-2.4.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jsoup-1.8.3 (1).jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jsoup-1.8.3-sources (1).jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jdatepicker-1.3.4.jar"/>
+        </jar>
+    </target>
+</project>

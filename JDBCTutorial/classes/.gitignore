@@ -1,4 +1,10 @@
-
+/CandleStick.hbm.xml
+/Employee.hbm.xml
+/Parameter.hbm.xml
+/Portfolio.hbm.xml
+/PortfolioHoldings.hbm.xml
+/SecurityInst.hbm.xml
+/TransactionData.hbm.xml
 /com/
 *.ini
 *.jar

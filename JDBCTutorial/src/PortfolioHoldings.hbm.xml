@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+ "-//Hibernate/Hibernate Mapping DTD//EN"
+ "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd"> 
+
+<hibernate-mapping>
+   <class name="com.workers.PortfolioHoldings" table="PORTFOLIO_HOLDINGS">
+      <meta attribute="class-description">
+         This class contains the Portfolio detail. 
+      </meta>
+      <composite-id>
+    	  <key-property name="tickerSymbol" type="string" column="TICKER_SYMBOL" /> 
+    	  <key-property name="portfolioName" type="string" column="PORTFOLIO_NAME" /> 
+	  </composite-id>
+   <property name="oldestOrderDate" column="OLDEST_ORDER_DATE" type="date"/> 
+   <property name="selected" column="SELECTED" type="boolean"/> 
+   </class>
+      
+</hibernate-mapping>

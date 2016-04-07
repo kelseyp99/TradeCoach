@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+ "-//Hibernate/Hibernate Mapping DTD//EN"
+ "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd"> 
+
+<hibernate-mapping>
+   <class name="com.workers.TransactionData" table="TRADE_HISTORY">
+      <meta attribute="class-description">
+         This class contains the SecurityInst detail. 
+      </meta>
+      <id name="tradeID" type="int" column="TRADE_ID">
+         <generator class="native"/>
+      </id>
+     <property name="tickerSymbol" column="TICKER_SYMBOL" type="string"/>
+       <property name="portfolioName" column="PORTFOLIO_NAME" type="string"/> 
+      <property name="instrumentName" column="INSTRUMENTNAME" type="string"/> 
+       <property name="orderDate" column="ORDERDATE" type="date"/>
+      <property name="entryPrice" column="ENTRYPRICE" type="double"/>
+      <property name="stopLoss" column="STOPLOSS" type="double"/>
+      <property name="stop" column="STOP" type="double"/>
+      <property name="stopTrigger" column="STOPTRIGGER" type="double"/>
+      <property name="stopType" column="STOPTYPE" type="string"/>
+      <property name="stopActivationDate" column="STOPACTIVATIONDATE" type="date"/>
+      <property name="position" column="POSITION" type="integer"/>
+     <property name="selected" column="SELECTED" type="boolean"/> 
+     <many-to-one name="SecurityInst" class="com.workers.SecurityInst"
+			column="tickerSymbol" unique="true" not-null="true" 
+			cascade="all" />
+       <many-to-one name="Portfolio" class="com.workers.Portfolio"
+			column="portfolioName" unique="true" not-null="true" 
+			cascade="all" />
+   </class>
+   
+</hibernate-mapping>

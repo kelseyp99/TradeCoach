@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+ "-//Hibernate/Hibernate Mapping DTD//EN"
+ "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd"> 
+
+<hibernate-mapping>
+   <class name="com.workers.Parameter" table="PARAMETERS">
+      <meta attribute="class-description">
+         This class contains the Portfolio detail. 
+      </meta>
+      <composite-id>
+    	  <key-property name="parameterName" type="string" column="PARAM_NAME" /> 
+    	  <key-property name="portfolioName" type="string" column="PORTFOLIO_NAME" /> 
+	  </composite-id>
+ <!--  <property name="portfolioName" column="PORTFOLIO_NAME" type="string"/> 
+    <property name="parameterName" column="PARAM_NAME" type="string"/>  -->
+   <property name="strVal" column="STRVAL" type="string"/> 
+   <property name="intVal" column="INTVAL" type="integer"/> 
+   <property name="boolVal" column="BOOLVAL" type="boolean"/> 
+   <!-- <many-to-one name="Portfolio" class="com.workers.Portfolio"
+			column="portfolioName" unique="true" not-null="true" 
+			cascade="all" /> -->
+   </class>
+      
+</hibernate-mapping>

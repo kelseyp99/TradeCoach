@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+ "-//Hibernate/Hibernate Mapping DTD//EN"
+ "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd"> 
+
+<hibernate-mapping>
+ <class name="com.workers.SecurityInst" table="SECURITIES">
+      <meta attribute="class-description">
+         This class contains the SecurityInst detail. 
+      </meta>
+      <id name="tickerSymbol" type="string" column="TICKER_SYMBOL">
+      </id>
+      <property name="instrumentName" column="COMPANY_NAME" type="string"/>
+      <property name="betaValue" column="BETA_VALUE" type="double"/>
+      <property name="selectedInstrument" column="SELECTED" type="boolean"/> 
+      
+		<set name="portfolios" table="PortfolioHoldings" inverse="true">
+			<key column="TICKER_SYMBOL" not-null="true" />
+			<many-to-many column="PORTFOLIO_NAME" class="com.workers.Portfolio" unique="true"/>
+			
+		<!-- <set name="groups" table="UsersGroups" inverse="true">
+			<key column="USER_ID"/>
+			<many-to-many column="GROUP_ID" class="Group" /> -->
+			
+		</set>
+   </class>
+   
+</hibernate-mapping>
