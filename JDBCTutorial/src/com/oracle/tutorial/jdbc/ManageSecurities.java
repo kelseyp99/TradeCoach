@@ -9,10 +9,8 @@ import org.hibernate.Transaction;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
+import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.Portfolio;
-import com.workers.SecurityInst;
-//import com.workers.Portfolio;
-//import com.workers.SecurityInst2;
 
 public class ManageSecurities {
    private static SessionFactory factory; 

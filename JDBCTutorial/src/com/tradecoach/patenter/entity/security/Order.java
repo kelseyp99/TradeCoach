@@ -1,7 +1,10 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import com.gui.GUI;
 import com.utilities.*;
+import com.workers.MoneyMgmtStrategy;
+import com.workers.Portfolio;
+import com.workers.Portfolios;
 import com.workers.Tools;
 import org.joda.time.DateTime;
 

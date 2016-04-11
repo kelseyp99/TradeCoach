@@ -1,8 +1,9 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import java.util.Date;
 
 import com.utilities.GlobalVars.*;
+import com.workers.Tools;
 
 public class Stop extends ExitOrder implements IProfitExit{
 	

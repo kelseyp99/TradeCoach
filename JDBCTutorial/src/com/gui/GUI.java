@@ -51,7 +51,7 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import com.sun.javafx.applet.Splash;
-import com.thehowtotutorial.splashscreen.JSplash;
+import com.typesafe.config.ConfigFactory;
 import com.workers.Portfolio;
 import com.workers.Portfolios;
 import com.workers.Tools;
@@ -80,9 +80,9 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 	private JFrame frmTradecoach;
 	private Portfolios portfolios;
 	private JTextArea textArea, textArea_1;
-	JTextPane tpAnalysis;
-	JTextPane tpSenarios;	
-	JTextPane tpMyResults;
+	private JTextPane tpAnalysis;
+	private JTextPane tpSenarios;	
+	private JTextPane tpMyResults;
 	private JTextPane tpNewTrades;	
 	private Date startDate, endDate;
 	private boolean initPortfolioLoaded = false, candidateUnivLoaded = false;
@@ -93,19 +93,19 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 	public JButton btnDump;
 	public JButton btnLoadMyTradesButton;
 	public JButton btnExit;
-	String tickerFile =  defaultTickerFile;
-	String tickerUFile =  defaultTickerUFile;
+	private String tickerFile =  defaultTickerFile;
+	private String tickerUFile =  defaultTickerUFile;
 	private int newShorts, newLongs;
 	private Double maxNewCapital;
 	private JLabel lblSecurityCount;
 	private Object roiPlugString="Calculating ...";
-	GUI gui;	
+	private GUI gui;	
 	private JTable tableMyTrades;
 	private JTable tableHistoricalPrices;
 	private JTable tableSecurities;
 	private JTable tablePortfolos;
 	String filename = "C:\\Users\\Phil\\Google Drive\\Stock Market\\Trades2.csv";
-	String propertiesfile = "properties/javadb-sample-properties.xml"; 
+	//String propertiesfile = "properties/javadb-sample-properties.xml"; 
 	protected String[] columnToolTips = {null,
             null,
             "The person's favorite sport to participate in",
@@ -160,8 +160,10 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 
 	private void initialize() {
 		try {
-			portfolios = new  Portfolios(propertiesfile);
-		} catch (IOException | SQLException e2) {			
+		//	portfolios = new  Portfolios(propertiesfile);
+			portfolios = new Portfolios(ConfigFactory.parseFile(new File("application.json")),gui);
+			portfolios.start();
+		} catch (Exception e2) {			
 			e2.printStackTrace();
 		}
 		setFrmTradecoach(new JFrame());

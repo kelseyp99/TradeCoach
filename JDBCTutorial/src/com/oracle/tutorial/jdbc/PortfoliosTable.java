@@ -23,11 +23,11 @@ import org.hibernate.cfg.AnnotationConfiguration;
 
 import com.gui.CheckBoxHeader;
 import com.gui.GUI;
-import com.workers.CandleSticks;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.MoneyMgmtStrategy;
 import com.workers.Portfolio;
 import com.workers.Portfolios;
-import com.workers.SecurityInst;
 
 public class PortfoliosTable  extends Tables {
 	   private static SessionFactory factory; 

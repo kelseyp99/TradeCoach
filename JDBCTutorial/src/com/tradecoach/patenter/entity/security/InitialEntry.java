@@ -1,6 +1,8 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import java.util.Date;
+
+import com.workers.Tools;
 
 
 

@@ -4,6 +4,8 @@
  */
 package com.workers;
 
+import com.tradecoach.patenter.entity.security.Leg;
+import com.tradecoach.patenter.entity.security.Legs;
 import com.utilities.GlobalVars;
 
 public class PatternFormation implements GlobalVars {

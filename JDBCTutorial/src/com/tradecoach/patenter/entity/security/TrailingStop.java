@@ -1,9 +1,11 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 import com.utilities.GlobalVars;
+import com.workers.MoneyMgmtStrategy;
+import com.workers.Tools;
 
 public class TrailingStop extends Order {
 	private Layers currentLayer, initialLayer ;

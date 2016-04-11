@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import com.workers.DAO;
 import com.utilities.*;

@@ -22,14 +22,20 @@ import javax.jws.WebParam;
 import javax.sql.DataSource;
 import javax.sql.rowset.CachedRowSet;
 
+import com.tradecoach.patenter.entity.security.CandleStick;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.EntityBean;
+import com.tradecoach.patenter.entity.security.IEntityBean;
+import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.utilities.GlobalVars;
 
-public abstract class PriceCollection implements GlobalVars {
+public abstract class PriceCollection extends EntityBean implements GlobalVars, IEntityBean {
  	private int tradingDays;
 	private double meanPL, variancePL, stdDevPL, portfolioValue =0;
 	protected Map<Date, Double> dailyPL;
 	Date startDate, endDate;
         @Resource( name="jdbc/APPDATA" )
+		private
         DataSource dataSource;
 	
 	public PriceCollection(MarketCalendar mc) {
@@ -87,7 +93,7 @@ public abstract class PriceCollection implements GlobalVars {
 	public void AddPriceData(CandleSticks cs) { AddPriceData(cs, 1); };
 	
 	public void AddPriceData(CandleSticks cs, int s){
-	   Iterator<CandleStick> i = cs.candleSticks.iterator();
+	   Iterator<CandleStick> i = cs.getCandleSticks().iterator();
 	   double close = 0.0, priorClose = 0.0, change = 0.0;
 	   CandleStick c;
 	   Date date = endDate, lastDate;
@@ -307,6 +313,14 @@ public abstract class PriceCollection implements GlobalVars {
 
 	public void setTradingDays(int tradingDays) {
 		this.tradingDays = tradingDays;
+	}
+
+	public DataSource getDataSource() {
+		return dataSource;
+	}
+
+	public void setDataSource(DataSource dataSource) {
+		this.dataSource = dataSource;
 	}
 	
 }

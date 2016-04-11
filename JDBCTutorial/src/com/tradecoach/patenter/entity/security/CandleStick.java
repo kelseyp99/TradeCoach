@@ -2,7 +2,7 @@
  * This holds the daily price action of the security
  */
 
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import java.util.Date;
 import java.io.Serializable;

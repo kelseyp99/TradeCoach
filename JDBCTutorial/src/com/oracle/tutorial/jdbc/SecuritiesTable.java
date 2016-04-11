@@ -23,10 +23,10 @@ import org.hibernate.Transaction;
 
 import com.gui.CheckBoxHeader;
 import com.gui.GUI;
-import com.workers.CandleSticks;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.MoneyMgmtStrategy;
 import com.workers.Portfolios;
-import com.workers.SecurityInst;
 
 	public class SecuritiesTable extends Tables {
 

@@ -2,7 +2,6 @@ package com.workers;
 
 import com.gui.GUI;
 import com.gui.NewTradeEntry;
-import com.oracle.tutorial.jdbc.CoffeesTable;
 import com.oracle.tutorial.jdbc.HistoricalPricesTable;
 import com.oracle.tutorial.jdbc.JDBCTutorialUtilities;
 import com.oracle.tutorial.jdbc.ParametersTable;
@@ -10,11 +9,14 @@ import com.oracle.tutorial.jdbc.PortfolioHoldingsTable;
 import com.oracle.tutorial.jdbc.PortfoliosTable;
 import com.oracle.tutorial.jdbc.SecuritiesTable;
 import com.oracle.tutorial.jdbc.TradeHistoryTable;
+import com.tradecoach.patenter.entity.security.Layers;
+import com.tradecoach.patenter.entity.security.SecurityInst;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import com.utilities.BuildScripts;
 import com.utilities.GlobalVars;
-import com.utilities.GlobalVars.typeOrder;
-
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,19 +24,14 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.InvalidPropertiesFormatException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
 
-import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
@@ -42,17 +39,13 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTMLDocument;
  
-import org.hibernate.HibernateException; 
-import org.hibernate.Session; 
-import org.hibernate.Transaction;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
-
-import com.workers.Portfolios.Pcts4Lyer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Portfolios implements GlobalVars, Runnable{
 	private Portfolio initialPortfolio;
@@ -84,6 +77,8 @@ public class Portfolios implements GlobalVars, Runnable{
 	private Connection myConnection;
 	private Boolean refreshOnStart=true,useNativeJDBC=false;
 	private static SessionFactory factory; 
+    private static final Logger logger = LoggerFactory.getLogger(Portfolios.class);
+    private Portfolio app;
 
 	public Portfolios()  {}
 	/**creates a <b>DataLoader</b> instance from the <i>csv</i> file represented by <i>fileName</i>.  An initial <b>Portfilio</b> 
@@ -124,6 +119,23 @@ public class Portfolios implements GlobalVars, Runnable{
 			e.printStackTrace();
 		}
 	}
+    public Portfolios(Config config, GUI gui) throws Exception {
+        this.setApp(new Portfolio(config).withProcessing().withDBModule());
+		this.setBelongsToGUI(gui);
+		buildTableInstances();
+		this.intialize(config.getString("filename"));
+        Runtime.getRuntime().addShutdownHook(new Thread("myapp-shutdown-hook") {
+            public void run() {
+                logger.info("Starting Application graceful shutdown...");
+                getApp().stop();
+                logger.info("Application shutdown complete.");
+            }
+        });
+    }
+
+    public void start() throws Exception {
+        getApp().start();
+    }
 	public void intialize(String fileName) {		
 		try {
 			if(!this.getUseNativeJDBC())
@@ -1580,5 +1592,11 @@ public void setUseNativeJDBC(Boolean useNativeJDBC) {
 	}
 	public void setFactory(SessionFactory factory) {
 		this.factory = factory;
+	}
+	public Portfolio getApp() {
+		return app;
+	}
+	public void setApp(Portfolio app) {
+		this.app = app;
 	}	
 }

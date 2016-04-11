@@ -7,6 +7,7 @@ import javax.swing.table.AbstractTableModel;
 import org.joda.time.DateTime;
 
 import com.gui.GUI;
+import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.utilities.GlobalVars.typeOrder;
 
 public class TransactionData {

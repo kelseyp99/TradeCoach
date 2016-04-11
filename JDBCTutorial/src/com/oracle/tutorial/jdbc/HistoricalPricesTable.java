@@ -45,6 +45,10 @@ import java.sql.Statement;
 import java.util.Iterator;
 import java.util.Vector;
 import com.gui.*;
+import com.tradecoach.patenter.entity.security.CandleStick;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.SecurityInst;
+
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -56,10 +60,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.sql.ordering.antlr.Factory;
 
-import com.workers.CandleStick;
-import com.workers.CandleSticks;
 import com.workers.Portfolios;
-import com.workers.SecurityInst;
 import com.workers.Tools;
 
 public class HistoricalPricesTable extends Tables {

@@ -1,4 +1,4 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 public class GapInPrice {
     CandleStick endPoint;
 

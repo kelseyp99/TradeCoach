@@ -17,11 +17,11 @@ import javax.swing.table.TableColumn;
 
 import com.gui.CheckBoxHeader;
 import com.gui.GUI;
-import com.workers.CandleSticks;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.MoneyMgmtStrategy;
 import com.workers.Portfolio;
 import com.workers.Portfolios;
-import com.workers.SecurityInst;
 
 	public class PortfolioHoldingsTable  extends Tables {
 		

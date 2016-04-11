@@ -1,9 +1,10 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import com.utilities.GlobalVars;
+import com.workers.Tools;
 
 public class ExitOrder extends Order implements IStopLossExit {
 

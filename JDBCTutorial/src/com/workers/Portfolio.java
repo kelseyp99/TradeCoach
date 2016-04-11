@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -21,7 +22,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 //import org.apache.commons.lang.StringUtils;
 //import org.apache.commons.math3.stat.correlation.Covariance;
 //import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
@@ -35,6 +38,7 @@ import javax.persistence.Id;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTMLDocument;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Entity;
@@ -45,8 +49,16 @@ import org.hibernate.Transaction;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-
+import com.tradecoach.patenter.db.DBHelperDataImport;
+import com.tradecoach.patenter.entity.security.CandleStick;
+import com.tradecoach.patenter.entity.security.SecurityInst;
+import com.tradecoach.patenter.entity.security.StopTestStats;
+import com.tradecoach.patenter.processor.PatentParsingProcessor;
 import com.gui.GUI;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public  class Portfolio extends PriceCollection implements Serializable {
 	private String portfolioName;
@@ -62,6 +74,17 @@ public  class Portfolio extends PriceCollection implements Serializable {
 	private DataLoader dl;
 	private boolean alreadyRanMyResults=false; 
     private Set<SecurityInst> securityInsts = new HashSet<SecurityInst>();
+    private Config config;
+    private DBHelperDataImport dbHelper;
+    private Queue<SecurityInst> pairDownloadingQueue = new ArrayBlockingQueue<>(10000);
+    private Queue<SecurityInst> pairParsingQueue = new ArrayBlockingQueue<>(10000);
+    private Queue<String> prefixesQueue;
+    private Queue<SecurityInst> dbQueue;
+
+    private ReportPrinter reportPrinter;
+	private PatentParsingProcessor patentParsingProcessor;
+	private boolean isStarted;
+    private static final Logger logger = LoggerFactory.getLogger(Portfolios.class);
 	
 	public Portfolio(String fname) {
 		 this.setPortfolioName(fname);
@@ -144,6 +167,76 @@ public  class Portfolio extends PriceCollection implements Serializable {
 	
 	public Portfolio() {
 	}
+	
+	 public Portfolio(Config config) {
+	        this.config = config;
+	        //Create Redisson object
+	        org.redisson.Config redisConfig = new org.redisson.Config();
+	        redisConfig.useSingleServer()
+	                .setAddress(config.getString("redis_url"));
+
+	        redisson = Redisson.create(redisConfig);
+	        setDbQueue(redisson.getQueue(this.config.getConfig("dbSerializer").getString("redis_queue_name")));
+	       // logger.info("DB queue size:", dbQueue.size());
+	    }
+
+	    public Portfolio withDBModule() throws SQLException {
+
+	       	this.setDbHelper(new HibernateUtil(getDbQueue(), config.getConfig("dbSerializer")));
+	       //this.dbHelper = new DBHelperDataImport(getDbQueue(), config.getConfig("dbSerializer"));
+	        
+	        return this;
+	    }
+
+	    public Portfolio withProcessing() throws ParserConfigurationException {
+	    		prefixesQueue = com.tradecoach.patenter.parsers.utils.UtilTools.getXMLFileNames();
+	    
+	    	patentParsingProcessor = new PatentParsingProcessor(
+	    			prefixesQueue,
+	    			pairDownloadingQueue,
+	    			config.getConfig("patentParser"));
+/*	    	pairDownloadingProcessor = new PAIRDownloadingProcessor(
+	    			pairDownloadingQueue,
+	    			pairParsingQueue,
+	    			getDbQueue(),
+	    			config.getConfig("PAIRDownloader"));
+	    	pairParserProcessor = new PAIRParserProcessor(
+	    			pairParsingQueue,
+	    			getDbQueue(),
+	    			config.getConfig("PAIRParser"));*/
+
+	    //	reportPrinter = new ReportPrinter(pairDownloadingProcessor, patentParsingProcessor, pairParserProcessor, pairDownloadingQueue, pairParsingQueue, prefixesQueue, getDbQueue());
+	    	return this;
+	    }
+
+	    public boolean start() {
+	        if (isStarted){
+	            return false;
+	        }
+	        logger.info("Starting application");
+	        this.getDbHelper().start();
+	        patentParsingProcessor.start();
+	     //    pairDownloadingProcessor.start();
+	    //    pairParserProcessor.start();
+	       reportPrinter.start();
+	        logger.info("Application started");
+	        return true;
+	    }
+
+	    public boolean stop() {
+	        if(isStarted){
+	            return false;
+	        }
+	        logger.info("Stopping application");
+	        if (dbHelper != null) dbHelper.shutdown();
+	        if (patentParsingProcessor != null) patentParsingProcessor.shutdown();
+	   //     redisson.shutdown();
+	    //    if (pairParserProcessor != null) pairParserProcessor.shutdown();
+	     //   if (pairDownloadingProcessor != null) pairDownloadingProcessor.shutdown();
+	        if (reportPrinter != null) reportPrinter.shutdown();
+	        logger.info("Application stopped successfully");
+	        return true;
+	    }
 
 	public void createMMS(){
 		for (int i = 0; i < 2; i++) {
@@ -471,7 +564,7 @@ public  class Portfolio extends PriceCollection implements Serializable {
 				posD = HoldingSet.get(i).getPosition();
 				hs = wf.format(posD);
 				
-				Iterator<CandleStick> j = HoldingSet.get(i).getCandleSticks().candleSticks.iterator();
+				Iterator<CandleStick> j = HoldingSet.get(i).getCandleSticks().getCandleSticks().iterator();
 			   	CandleStick c = null;
 			   	while (j.hasNext()) {
 				/*'j' is the holdings object of this portfolio class instance
@@ -808,6 +901,22 @@ public  class Portfolio extends PriceCollection implements Serializable {
 
 	public void setAlreadyRanMyResults(boolean alreadyRanMyResults) {
 		this.alreadyRanMyResults = alreadyRanMyResults;
+	}
+
+	public DBHelperDataImport getDbHelper() {
+		return dbHelper;
+	}
+
+	public void setDbHelper(DBHelperDataImport dbHelper) {
+		this.dbHelper = dbHelper;
+	}
+
+	public Queue<SecurityInst> getDbQueue() {
+		return dbQueue;
+	}
+
+	public void setDbQueue(Queue<SecurityInst> dbQueue) {
+		this.dbQueue = dbQueue;
 	}
 
 	public static void main(String[] args) throws InterruptedException {

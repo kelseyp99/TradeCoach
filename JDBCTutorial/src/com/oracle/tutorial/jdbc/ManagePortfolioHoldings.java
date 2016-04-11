@@ -9,8 +9,8 @@ import org.hibernate.Transaction;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
+import com.tradecoach.patenter.entity.security.PortfolioHoldings;
 import com.workers.Portfolio;
-import com.workers.PortfolioHoldings;
 
 public class ManagePortfolioHoldings {
    private static SessionFactory factory; 

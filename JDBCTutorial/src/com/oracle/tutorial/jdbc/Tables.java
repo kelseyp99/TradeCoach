@@ -22,6 +22,9 @@ import java.util.Map;
 import java.util.Vector;
 import com.gui.*;
 import com.oracle.tutorial.jdbc.Tables.Columns;
+import com.tradecoach.patenter.entity.security.CandleStick;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.utilities.GlobalVars;
 
 import javax.swing.AbstractButton;
@@ -42,10 +45,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
-import com.workers.CandleStick;
-import com.workers.CandleSticks;
 import com.workers.Portfolios;
-import com.workers.SecurityInst;
 import com.workers.Tools;
 import com.workers.Portfolios;
 

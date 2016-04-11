@@ -9,7 +9,7 @@ import org.hibernate.Transaction;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-import com.workers.Parameter;
+import com.tradecoach.patenter.entity.security.Parameter;
 import com.workers.Portfolio;
 
 public class ManageParameter {

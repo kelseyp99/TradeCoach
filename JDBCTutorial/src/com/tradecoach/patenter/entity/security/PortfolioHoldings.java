@@ -1,4 +1,4 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import java.io.Serializable;
 import java.util.Date;

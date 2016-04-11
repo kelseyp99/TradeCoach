@@ -1,10 +1,9 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.Connection;
@@ -15,10 +14,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.jdom2.Document;
@@ -28,8 +25,14 @@ import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 
 import com.utilities.GlobalVars;
+import com.workers.MarketCalendar;
+import com.workers.MoneyMgmtStrategy;
+import com.workers.Portfolio;
+import com.workers.Portfolios;
+import com.workers.PriceCollection;
+import com.workers.Tools;
 
-public class SecurityInst extends PriceCollection implements Serializable, Runnable, Comparable<Object> {
+public class Instrument extends PriceCollection implements Runnable, Comparable<Object> {
 
 	private Double meanPrice, stdDevPrice, variancePrice, lastClosePrice;
 	private Double corralationToInitPortfolio;
@@ -41,29 +44,30 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 	private MoneyMgmtStrategy mms, mmsTemp;
 	private ArrayList<MoneyMgmtStrategy> mmsSet = new ArrayList<MoneyMgmtStrategy> ();
 	private boolean isSplit;
-	private boolean selectedInstrument, selectedTrade;
+	private boolean Selected;
 	private Legs Legs;
 	private int portfolioID = 1;
 	private Portfolio belongsTo;
 	private Double betaValue=1.0d;
 	private int executionLevel;
 	private static String dbURL = "jdbc:derby:C:\\Users\\Phil\\MyDB;create=true;user=test;password=test";
-    private static Connection conn = null;    
-    private Set<Portfolio> portfolios = new HashSet<Portfolio>();
-    public SecurityInst() {}
+    private static Connection conn = null;
+    public Instrument() {
+		super();
+	}
 
-	public SecurityInst(MarketCalendar pmc, String tickerSymbol, String instrumentName, Integer position) {
+	public Instrument(MarketCalendar pmc, String tickerSymbol, String instrumentName, Integer position) {
 		super(pmc);
 		this.tickerSymbol = tickerSymbol;
 		//this.instrumentName =  instrumentName;
 		this.position =  position;
 		//create an array containing all calendar days for the desired period. 
 		//not just those having price data for this security
-		cs = new CandleSticks(this);
+	//	cs = new CandleSticks(this);
 		mms = new MoneyMgmtStrategy();
 	}
 
-	public SecurityInst(MarketCalendar pmc, String tickerSymbol, int position) {
+	public Instrument(MarketCalendar pmc, String tickerSymbol, int position) {
 		super(pmc);
 		this.tickerSymbol = tickerSymbol;
 		this.position =  position;
@@ -71,10 +75,11 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		//not just those having price data for this security
 		//	buildCalendar(pmc.getStartDate(), pmc.getEndDate());
 		//	vVaRs = new VaR(mc);
-		cs = new CandleSticks(this);
+	//	cs = new CandleSticks(this);
+
 	}
 
-	public SecurityInst(SecurityInst s) {
+	public Instrument(Instrument s) {
 		//creates a clone instance of hte security
 		super(s.getStartDate(), s.getEndDate());
 		/*create a reference of a clone security class to the original CandleSicks 
@@ -86,8 +91,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		this.setEndDate(s.getEndDate());
 		this.setTickerSymbol(s.getTickerSymbol());
 		this.setinstrumentName(s.getinstrumentName());
-		this.setSelectedTrade(s.isSelectedTrade());
-		this.setSelectedInstrument(s.isSelectedInstrument());
+		this.setSelected(s.isSelected());
 		this.setMeanPL(s.getMeanPL());
 		this.setPosition(s.getPosition());
 		this.setStartDate(s.getStartDate());
@@ -97,7 +101,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 	} //SecurityInst(SecurityInsinclination
 
 
-	public SecurityInst(MarketCalendar mc, MoneyMgmtStrategy mms, int i) {
+	public Instrument(MarketCalendar mc, MoneyMgmtStrategy mms, int i) {
 		super(mc);
 		this.tickerSymbol = mms.getTickerSymbol();
 		//	this.instrumentName =  mms.getInstrumentName();
@@ -106,21 +110,21 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		//not just those having price data for this security
 		//	buildCalendar(pmc.getStartDate(), pmc.getEndDate());
 		//	vVaRs = new VaR(mc);
-		cs = new CandleSticks(this);
+	//	cs = new CandleSticks(this);
 		this.mms = mms;
-		this.getMms().setBelongsTo(this);
+	//	this.getMms().setBelongsTo(this);
 	}// end SecurityInst
 
 	/**
 	 * Create an instance of <b>SecurityInst</b> from <i>mms</i> using the ticker symbol and quantity.
 	 * @param mms
 	 */
-	public SecurityInst(MoneyMgmtStrategy mms) {
+	public Instrument(MoneyMgmtStrategy mms) {
 		this.tickerSymbol = mms.getTickerSymbol();
 		this.position =  mms.getOrder().getQuantity();
-		cs = new CandleSticks(this);
+	//	cs = new CandleSticks(this);
 		this.mms = mms;
-		this.getMms().setBelongsTo(this);
+	//	this.getMms().setBelongsTo(this);
 	}
 	
 	@Override
@@ -180,10 +184,6 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 			this.setExecutionLevel(this.executeOrder(this.belongsTo.getMms2bRun()));
 	}
 
-	private boolean isSelected() {
-		return this.isSelectedInstrument()||this.isSelectedTrade();
-	}
-
 	public double getROIweightedContribution(int totalDays) {
 		double x = this.getMms().getROIweightedContribution(totalDays);
 		return x;
@@ -196,7 +196,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 	 */
 	public void createMMS(MoneyMgmtStrategy mms) {
 		mms = new MoneyMgmtStrategy();
-		mms.setBelongsTo(this);
+		//mms.setBelongsTo(this);
 	}
 
 	/** 
@@ -253,7 +253,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		Connection connection = null;
 		PreparedStatement loadHistory = null;
 		try {
-			connection = dataSource.getConnection();
+			connection = getDataSource().getConnection();
 			loadHistory = connection.prepareStatement(
 					"SELECT TRADEDATE, CLOSEPRICE, OPENPRICE, HIGHPRICE, LOWPRICE, ADJCLOSE, VOLUME " +
 							"FROM PRICEHISTORY " + 
@@ -303,7 +303,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		Connection connection = null;
 		PreparedStatement saveHistory = null;
 		try {
-			connection = dataSource.getConnection();
+			connection = getDataSource().getConnection();
 			saveHistory = connection.prepareStatement(
 					"DELETE FROM CANDLESTICKS " + 
 					"WHERE SEC_INST_ID = ?");
@@ -369,7 +369,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		Connection connection = null;
 		PreparedStatement loadHistory = null;
 		try {
-			connection = dataSource.getConnection();
+			connection = getDataSource().getConnection();
 			loadHistory = connection.prepareStatement(
 					"SELECT SEC_INST_ID " +
 							"FROM SECURITY_INST " + 
@@ -592,47 +592,43 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		}
 	}
 	public int loadHistoricalPriceData() throws InterruptedException{
-		try {
-			Calendar cal = Calendar.getInstance();
-			cal.set(this.getMms().getOrder().getOrderDate().getYear(),this.getMms().getOrder().getOrderDate().getMonth(),this.getMms().getOrder().getOrderDate().getDay());
-			cal.set(this.getMms().getOrder().getOrderDate().getYear(),this.getMms().getOrder().getOrderDate().getMonth(),1);
-			startDate = this.getMms().getOrder().getOrderDate();
-			cal.set(Calendar.YEAR, 2016);
-			endDate = cal.getTime();
-			
-			//load security info from derby database
-			this.getBelongsToPortfolios().getSecurityInstTable().loadSecurityInfo(this);
-			
-			boolean refreshOnStart=this.getBelongsToPortfolios().getRefreshOnStart();//toggle on an off whetehr to refresh from Yahoo
-			if(refreshOnStart==true) {
-				boolean runIt=this.getNewestCandleStickSaved()==null||this.getOldestCandleStickSaved()==null;
+		Calendar cal = Calendar.getInstance();
+		cal.set(this.getMms().getOrder().getOrderDate().getYear(),this.getMms().getOrder().getOrderDate().getMonth(),this.getMms().getOrder().getOrderDate().getDay());
+		cal.set(this.getMms().getOrder().getOrderDate().getYear(),this.getMms().getOrder().getOrderDate().getMonth(),1);
+		startDate = this.getMms().getOrder().getOrderDate();
+		cal.set(Calendar.YEAR, 2016);
+		endDate = cal.getTime();
+		
+		//load security info from derby database
+//		this.getBelongsToPortfolios().getSecurityInstTable().loadSecurityInfo(this);
+		
+		boolean refreshOnStart=false;//toggle on an off whetehr to refresh from Yahoo
+		if(refreshOnStart==true) {
+			boolean runIt=this.getNewestCandleStickSaved()==null||this.getOldestCandleStickSaved()==null;
 
-				/*if the specified date range extends beyond (either older or newer) than
-				 * that stored in derby, then query YQL for new activity, if not then reduce 
-				 * the time window size.  However, the YQL may not run regardless*/
-				if(!runIt){
-					if(Tools.isLater(endDate, this.getNewestCandleStickSaved().getDate()))
-						runIt=true;
-					else 
-						endDate = this.getOldestCandleStickSaved().getDate();
-				}
-				if(!runIt){
-					if(!Tools.isLater(startDate, this.getOldestCandleStickSaved().getDate()))
-						runIt=true;
-					else 
-						startDate = this.getNewestCandleStickSaved().getDate();
-				}
-				//get latest stock info from YQL
-				if(runIt) 
-					loadHistoricalPriceData(startDate, endDate);
+			/*if the specified date range extends beyond (either older or newer) than
+			 * that stored in derby, then query YQL for new activity, if not then reduce 
+			 * the time window size.  However, the YQL may not run regardless*/
+			if(!runIt){
+				if(Tools.isLater(endDate, this.getNewestCandleStickSaved().getDate()))
+					runIt=true;
+				else 
+					endDate = this.getOldestCandleStickSaved().getDate();
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+			if(!runIt){
+				if(!Tools.isLater(startDate, this.getOldestCandleStickSaved().getDate()))
+					runIt=true;
+				else 
+					startDate = this.getNewestCandleStickSaved().getDate();
+			}
+			//get latest stock info from YQL
+			if(runIt) 
+				loadHistoricalPriceData(startDate, endDate);
 		}
 		return 1;
 	}
 
-	//Create a method to construct the URL given the startDatve, endDate, tickerSymbol as input
+	//Create a method to construct the URL given the startDate, endDate, tickerSymbol as input
 	public void loadHistoricalPriceData(Date startDate, Date endDate) throws InterruptedException{
 		String sDate = df.format(startDate);
 		String eDate = df.format(endDate);
@@ -767,11 +763,6 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		return this.getBelongsTo().getBelongsTo();
 	}
 	
-	public String getCurrentProject() {
-		return this.getBelongsTo().getBelongsTo().
-		getBelongsToGUI().getCurrentProject();
-	}	
-		
     private static void createConnection()
     {
         try
@@ -942,35 +933,15 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 	public void setNewestCandleStickSaved(CandleStick newestCandleStickSaved) {
 		NewestCandleStickSaved = newestCandleStickSaved;
 	}
-	
-	public boolean getSelectedTrade() {
-		return selectedTrade;
+
+	public boolean isSelected() {
+		return Selected;
 	}
 
-	public boolean isSelectedTrade() {
-		return selectedTrade;
+	public void setSelected(boolean selected) {
+		Selected = selected;
 	}
 
-	public void setSelectedTrade(boolean selectedTrade) {
-		this.selectedTrade = selectedTrade;
-	}
-
-	public boolean isSelectedInstrument() {
-		return selectedInstrument;
-	}
-	
-	public boolean getSelectedInstrument() {
-		return selectedInstrument;
-	}
-
-	public void setSelectedInstrument(boolean selected) {
-		selectedInstrument = selected;
-	}
-
-    public void addGroup(Portfolio portfolio) {
-        this.portfolios.add(portfolio);
-    }
-	
 	public static void main(String[] args) throws InterruptedException {
 
 		/*"AXP", "BA", "CAT", "CSCO", "CVX", "DD", "DIS", "GE", "GS", "HD", "IBM", "INTC", "JNJ", "JPM",
@@ -1121,8 +1092,8 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		//   mms.add(                new MoneyMgmtStrategy(tickers,instrumentNames, orderDates, positions, entryPrices, stopLosses,     stopType,  stopActivationDate,    stopTriggers, stops.get(i), null));
 		MoneyMgmtStrategy mms = new MoneyMgmtStrategy(ticker, instrumentName,  orderDate,  orderQty,  entryPrice,  stopLossPrice,   TypeOrder, orderDate,             stopTriggerPrice, stopPrice, null);
 		//   SecurityInst s = new SecurityInst(mc, ticker, orderQty);
-		SecurityInst s = new SecurityInst( mc,  mms, 0);
-		mms.setBelongsTo(s);
+		Instrument s = new Instrument( mc,  mms, 0);
+	//	mms.setBelongsTo(s);
 		s.getStockInfo();
 		s.loadHistoricalPriceData(mc.getStartDate(), mc.getEndDate());
 		s.executeOrder();
@@ -1160,9 +1131,9 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		int i = 0;
 		try {
 			if(si==null)
-				throw new Exception(String.format("si==null;  Error happened when si = %s", ((SecurityInst)si).getTickerSymbol()));
+				throw new Exception(String.format("si==null;  Error happened when si = %s", ((Instrument)si).getTickerSymbol()));
      
-			Date f = ((SecurityInst)si).getMms().getOrder().getOrderDate();
+			Date f = ((Instrument)si).getMms().getOrder().getOrderDate();
 			i = Tools.daysBetween(f, this.getMms().getOrder().getOrderDate());
 		} catch (Exception e) {
 			

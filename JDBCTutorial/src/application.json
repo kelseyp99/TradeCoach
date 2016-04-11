@@ -1,0 +1,66 @@
+{
+    "redis_url" : "localhost:6379",
+    "prefixes_file" : "prefixes.conf",
+    "filename" : "C:\\Users\\Phil\\Google Drive\\Stock Market\\Trades2.csv"
+    
+    "dbSerializer" : {
+        "url" : "jdbc:postgresql://localhost:5444/datanovo_dev",
+        "username" : "root",
+        "password" : "4030",
+        "flush_barrier" : 1,
+        "forced_flushing_period" : 3,
+        "batch_size" : 1,
+        "create_schema" : false,
+        "redis_queue_name" : "patentsToDBQueue"
+    },
+
+    "dbSerializerDerby" : {
+        "dbms" : "derby"
+        "jar_file" : "C:\\Users\\Phil\\OneDrive\\TradsCoach\\TradeCoach.jar"
+        "driver : "org.apache.derby.jdbc.EmbeddedDriver"
+        "server_name" : "localhost"
+        "port_number" : 3306"
+        "url" : "jdbc:postgresql://localhost:3306/prod",
+        "username" : "root",
+        "password" : "4030",
+        "flush_barrier" : 1,
+        "forced_flushing_period" : 3,
+        "batch_size" : 1,
+        "create_schema" : false,
+        "redis_queue_name" : "patentsToDBQueue"
+    },
+
+    "patentParser" : {
+        "S3_worker" : {
+            "aws_access_key" : "AKIAJ7IX4R4Z24A5OCRA",
+            "aws_secret_key" : "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",
+            "aws_bucket_name" : "datanovo-test",
+            "retry_count" : 3,
+            "retry_timeout" : 10
+        },
+        "redis_queue_name" : "prefixesQueue",
+        "n_threads" : 1
+    },
+
+    "PAIRDownloader" : {
+        "S3_worker" : {
+            "aws_access_key" : "AKIAJ7IX4R4Z24A5OCRA",
+            "aws_secret_key" : "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",
+            "aws_bucket_name" : "datanovo-test",
+            "retry_count" : 3,
+            "retry_timeout" : 10
+        },
+        "n_threads" : 1
+    },
+
+    "PAIRParser" : {
+        "S3_worker" : {
+            "aws_access_key" : "AKIAJ7IX4R4Z24A5OCRA",
+            "aws_secret_key" : "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",
+            "aws_bucket_name" : "datanovo-test",
+            "retry_count" : 3,
+            "retry_timeout" : 10
+        },
+        "n_threads" : 1
+    }
+}

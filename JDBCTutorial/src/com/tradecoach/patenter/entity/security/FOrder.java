@@ -1,4 +1,4 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 import com.utilities.*;
 
 public class FOrder implements GlobalVars{

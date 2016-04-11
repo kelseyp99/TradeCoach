@@ -26,12 +26,12 @@ import org.hibernate.SessionFactory;
 import com.gui.CheckBoxHeader;
 import com.gui.GUI;
 import com.sun.glass.ui.MenuItem;
-import com.workers.CandleSticks;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.Parameter;
+import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.MoneyMgmtStrategy;
-import com.workers.Parameter;
 import com.workers.Portfolio;
 import com.workers.Portfolios;
-import com.workers.SecurityInst;
 
 	public class ParametersTable  extends Tables {
 	//	private boolean RefreshOnlineDafault;

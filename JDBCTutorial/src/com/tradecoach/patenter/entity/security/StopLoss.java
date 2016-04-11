@@ -3,11 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 
 import java.util.Date;
 
 import com.utilities.GlobalVars.*;
+import com.workers.MoneyMgmtStrategy;
+import com.workers.Tools;
 
 
 

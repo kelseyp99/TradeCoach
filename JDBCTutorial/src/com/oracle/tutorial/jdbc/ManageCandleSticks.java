@@ -10,7 +10,7 @@ import org.hibernate.Transaction;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-import com.workers.CandleStick;
+import com.tradecoach.patenter.entity.security.CandleStick;
 import com.workers.TransactionData;
 
 public class ManageCandleSticks {

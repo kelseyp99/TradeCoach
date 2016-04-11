@@ -1,8 +1,9 @@
-package com.workers;
+package com.tradecoach.patenter.entity.security;
 import java.util.Date;
 
 import com.utilities.*;
 import com.utilities.GlobalVars.*;
+import com.workers.MoneyMgmtStrategy;
 
 public interface IOrder {
 	abstract void executeOrder() ;
