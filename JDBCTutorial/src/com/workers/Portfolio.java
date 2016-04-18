@@ -34,7 +34,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTMLDocument;
@@ -59,8 +62,15 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+@Entity}
+@Table(name = "portfolio_name")
 public  class Portfolio extends PriceCollection implements Serializable {
+	@Id 
+	@SequenceGenerator(name="identifier", sequenceName="portfolio_id_seq",allocationSize=1) 
+	@GeneratedValue(strategy=GenerationType.SEQUENCE,	generator="identifier")
+	@Column(name = "id")
+	private int id ;
+	@Column(name = "portfolio_name")//, unique = true, index = true)
 	private String portfolioName;
 	private boolean runCurrent = true;
 	private static final int NTHREDS = 10;
@@ -171,18 +181,18 @@ public  class Portfolio extends PriceCollection implements Serializable {
 	 public Portfolio(Config config) {
 	        this.config = config;
 	        //Create Redisson object
-	        org.redisson.Config redisConfig = new org.redisson.Config();
-	        redisConfig.useSingleServer()
-	                .setAddress(config.getString("redis_url"));
+	     //   org.redisson.Config redisConfig = new org.redisson.Config();
+	     //   redisConfig.useSingleServer()
+	     //           .setAddress(config.getString("redis_url"));
 
-	        redisson = Redisson.create(redisConfig);
+	     //   redisson = Redisson.create(redisConfig);
 	        setDbQueue(redisson.getQueue(this.config.getConfig("dbSerializer").getString("redis_queue_name")));
 	       // logger.info("DB queue size:", dbQueue.size());
 	    }
 
 	    public Portfolio withDBModule() throws SQLException {
 
-	       	this.setDbHelper(new HibernateUtil(getDbQueue(), config.getConfig("dbSerializer")));
+	       	this.setDbHelper(new DBHelperDataImport(getDbQueue(), config.getConfig("dbSerializer")));
 	       //this.dbHelper = new DBHelperDataImport(getDbQueue(), config.getConfig("dbSerializer"));
 	        
 	        return this;

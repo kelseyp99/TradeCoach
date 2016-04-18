@@ -20,7 +20,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
@@ -35,27 +43,58 @@ import com.workers.Portfolios;
 import com.workers.PriceCollection;
 import com.workers.Tools;
 
-public class SecurityInst extends PriceCollection implements Serializable, Runnable, Comparable<Object> {
+import antlr.StringUtils;
 
-	private Double meanPrice, stdDevPrice, variancePrice, lastClosePrice;
-	private Double corralationToInitPortfolio;
-	private String instrumentName;
+@Entity
+@Table(name = "securities")
+public class SecurityInst extends PriceCollection implements Serializable, Runnable, Comparable<Object> {
+	public static final String TICKER_SYMBOL_COL = "ticker_symbol";
+	@Id 
+	@SequenceGenerator(name="identifier", sequenceName="securities_id_seq",allocationSize=1) 
+	@GeneratedValue(strategy=GenerationType.SEQUENCE,	generator="identifier")
+	@Column(name = "id")
+	private int id ;
+	@Column(name = TICKER_SYMBOL_COL)//, unique = true, index = true)
 	private String tickerSymbol;
-	private int position;
-	private CandleSticks cs;
-	private CandleStick OldestCandleStickSaved, NewestCandleStickSaved;
-	private MoneyMgmtStrategy mms, mmsTemp;
-	private ArrayList<MoneyMgmtStrategy> mmsSet = new ArrayList<MoneyMgmtStrategy> ();
-	private boolean isSplit;
-	private boolean selectedInstrument, selectedTrade;
-	private Legs Legs;
-	private int portfolioID = 1;
-	private Portfolio belongsTo;
+	@Column(name = "company_name", nullable = true)
+	private String instrumentName;	
+	@Column(name = "beta_value", nullable = true)
 	private Double betaValue=1.0d;
+	@Column(name = "selected")
+	@Transient
+	private boolean selectedInstrument, isSplit;
+	@Transient
+	private Double meanPrice, stdDevPrice, variancePrice, lastClosePrice;
+	@Transient
+	private Double corralationToInitPortfolio;
+	@Transient
+	private int position;
+	@Transient
+	private CandleSticks cs;
+	@Transient
+	private CandleStick OldestCandleStickSaved, NewestCandleStickSaved;
+	@Transient
+	private MoneyMgmtStrategy mms, mmsTemp;
+	@Transient
+	private ArrayList<MoneyMgmtStrategy> mmsSet = new ArrayList<MoneyMgmtStrategy> ();
+
+	@Transient
+	private boolean selectedTrade;
+	@Transient
+	private Legs Legs;
+	@Transient
+	private int portfolioID = 1;
+	@Transient
+	private Portfolio belongsTo;
+	@Transient
 	private int executionLevel;
+	@Transient
 	private static String dbURL = "jdbc:derby:C:\\Users\\Phil\\MyDB;create=true;user=test;password=test";
+	@Transient
     private static Connection conn = null;    
+	@Transient
     private Set<Portfolio> portfolios = new HashSet<Portfolio>();
+	
     public SecurityInst() {}
 
 	public SecurityInst(MarketCalendar pmc, String tickerSymbol, String instrumentName, Integer position) {
