@@ -50,7 +50,7 @@ public class TransactionTableModel extends MyTableModel {
 //	//	this.getTradeHistoryTable().updateTableCell(t.getTradeID(), column, value);
 //	}
 	private TradeHistoryTable getTradeHistoryTable() {
-		return this.getBelongsToGUI().getPortfolios().getTradeHistoryTable();
+		return this.getBelongsToGUI().getPortfoliosGroup().getTradeHistoryTable();
 	}
     public void tableChanged(TableModelEvent e) {
    // 	super.tableChanged(e);

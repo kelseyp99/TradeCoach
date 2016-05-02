@@ -3,21 +3,49 @@ package com.workers;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.swing.table.AbstractTableModel;
 import org.joda.time.DateTime;
 
 import com.gui.GUI;
-import com.tradecoach.patenter.entity.security.SecurityInst;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.Portfolio;
+import com.tradecoach.patenter.entity.security.Securities;
 import com.utilities.GlobalVars.typeOrder;
-
-public class TransactionData {
-	private String tickerSymbol, instrumentName, portfolioName;
+@Entity
+@Table(name = "trade_history")
+public class TransactionData {	
+	@Id 
+	@SequenceGenerator(name="identifier", sequenceName="trade_history_id_seq",allocationSize=1) 
+	@GeneratedValue(strategy=GenerationType.SEQUENCE,	generator="identifier")
+	@Column(name = "id") private int id ;
+	@ManyToOne(cascade = CascadeType.ALL) @JoinColumn(name = "security_id") private Securities security;
+	//@ManyToOne private Securities security;
+	@ManyToOne(cascade = CascadeType.ALL) @JoinColumn(name = "portfolio_id") private Portfolio portfolio;
+	//@ManyToOne private Portfolio portfolio;
+	@Column(name = "ticker_symbol")private String tickerSymbol;
+	@Column(name = "instrumentname")private String instrumentName;
+	@Column(name = "portfolio_name")private String portfolioName;
 	private typeOrder stopType;
 	private Date orderDate, stopActivationDate;
 	private Double entryPrice,stopLoss,stop, stopTrigger;
-	private Integer tradeID, position ;
-	private SecurityInst securityInst;
-	private boolean hasChanged = false, selected;
+	private Integer tradeID;
+	private boolean selected;
+	@Column(name = "shares_traded")private Integer position ;
+	@Transient private SecurityInst securityInst;
+	@Transient private boolean hasChanged = false;
 
 	public TransactionData() {}
 	public TransactionData(String tickerSymbol, String instrumentName, typeOrder stopType, Date orderDate,

@@ -27,24 +27,24 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import com.gui.CheckBoxHeader;
 import com.gui.GUI;
+import com.tradecoach.patenter.entity.security.Portfolio;
 import com.utilities.GlobalVars.typeOrder;
 import com.workers.DataLoader;
 import com.workers.MoneyMgmtStrategy;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
 import com.workers.TransactionData;
 
-import org.hibernate.HibernateException; 
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
 import org.hibernate.Session; 
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 
 	public class TradeHistoryTable extends Tables {	  
-		   private static SessionFactory factory; 
-		   
-	
+	  private static SessionFactory factory; 
 	  public TradeHistoryTable(){};
-	  public TradeHistoryTable(Connection connArg, String dbNameArg, String dbmsArg, Portfolios belongsTo) {
+	  public TradeHistoryTable(Connection connArg, String dbNameArg, String dbmsArg, PortfoliosGroup belongsTo) {
 		    super(connArg, dbNameArg, dbmsArg, belongsTo, "TRADE_HISTORY");
 		    this.setDdlCreate(new String[] {
 		    		"CREATE TABLE APP.TRADE_HISTORY (" +		    
@@ -121,6 +121,10 @@ import org.hibernate.cfg.Configuration;
 		    this.initialize();
 	  }
 	  
+		public TradeHistoryTable(PortfoliosGroup belongsTo) {
+			super( belongsTo, "TRADE_HISTORY");
+			this.initialize();
+	}
 		public void initialize(){
 			try {//it does not appear to be necessayr to save the class type.  Consider removing it
 				super.initialize();
@@ -172,41 +176,68 @@ import org.hibernate.cfg.Configuration;
 	  }
 
 	  public  void loadTradeHistoryData(List<MoneyMgmtStrategy> mms) throws SQLException {
+		if(this.getBelongsTo().getConfig().getConfig("dbSerializer").getBoolean("use_hibernate_orm"))
+			loadTradeHistoryDataViaHibernate(mms);
+		else
+			loadTradeHistoryDataViaJDBC(mms);
+	  }
+
+	  public  void loadTradeHistoryDataViaJDBC(List<MoneyMgmtStrategy> mms) {	  
 		  PreparedStatement stmt = null;
-		    String query =
-		      "select TRADE_ID, TICKER_SYMBOL, INSTRUMENTNAME, ORDERDATE, ENTRYPRICE, STOPLOSS, STOP, STOPTRIGGER, STOPTYPE, STOPACTIVATIONDATE, POSITION " +
-		      "from APP.TRADE_HISTORY " +  
-		      "where PORTFOLIO_NAME = ? " +
-		      "order by ORDERDATE, TRADE_ID";
-		    try {
+		  String query =
+				  "select TRADE_ID, TICKER_SYMBOL, INSTRUMENTNAME, ORDERDATE, ENTRYPRICE, STOPLOSS, STOP, STOPTRIGGER, STOPTYPE, STOPACTIVATIONDATE, POSITION " +
+						  "from APP.TRADE_HISTORY " +  
+						  "where PORTFOLIO_NAME = ? " +
+						  "order by ORDERDATE, TRADE_ID";
+		  try {
 			  stmt = con.prepareStatement(query);
 			  stmt.setString(1, this.getCurrentProject());
-		      ResultSet rs = stmt.executeQuery();
-		      while (rs.next()) {
-		    	TransactionData ts = new TransactionData();
-		    	ts.setTradeID(rs.getInt("TRADE_ID"));		    	
-		    	ts.setTickerSymbol(rs.getString("TICKER_SYMBOL"));
-		    	ts.setInstrumentName(rs.getString("INSTRUMENTNAME"));
-		    	ts.setOrderDate(new java.sql.Date(rs.getDate("ORDERDATE").getTime()));
-		    	ts.setEntryPrice(rs.getDouble("ENTRYPRICE"));
-		    	ts.setStopLoss(rs.getDouble("STOPLOSS"));
-		    	ts.setStop(rs.getDouble("STOP"));
-		    	ts.setStopTrigger(rs.getDouble("STOPTRIGGER"));
-		    	ts.setStopType(com.workers.DataLoader.parseTypeOrder(rs.getString("STOPTYPE")));
-		    	if(rs.getDate("STOPACTIVATIONDATE")!=null)
-		    		ts.setStopActivationDate(new java.sql.Date(rs.getDate("STOPACTIVATIONDATE").getTime()));
-		    	ts.setPosition(rs.getInt("POSITION"));
-		    	mms.add(new MoneyMgmtStrategy(ts));
-		      }
-		    } catch (SQLException e) {     
-		    	JDBCTutorialUtilities.printSQLException(e);
-		    } catch (Exception f){
-		    	f.printStackTrace();
-		    } finally {
-		    	if (stmt != null) { stmt.close(); }
-		    }
+			  ResultSet rs = stmt.executeQuery();
+			  while (rs.next()) {
+				  TransactionData ts = new TransactionData();
+				  ts.setTradeID(rs.getInt("TRADE_ID"));		    	
+				  ts.setTickerSymbol(rs.getString("TICKER_SYMBOL"));
+				  ts.setInstrumentName(rs.getString("INSTRUMENTNAME"));
+				  ts.setOrderDate(new java.sql.Date(rs.getDate("ORDERDATE").getTime()));
+				  ts.setEntryPrice(rs.getDouble("ENTRYPRICE"));
+				  ts.setStopLoss(rs.getDouble("STOPLOSS"));
+				  ts.setStop(rs.getDouble("STOP"));
+				  ts.setStopTrigger(rs.getDouble("STOPTRIGGER"));
+				  ts.setStopType(com.workers.DataLoader.parseTypeOrder(rs.getString("STOPTYPE")));
+				  if(rs.getDate("STOPACTIVATIONDATE")!=null)
+					  ts.setStopActivationDate(new java.sql.Date(rs.getDate("STOPACTIVATIONDATE").getTime()));
+				  ts.setPosition(rs.getInt("POSITION"));
+				  mms.add(new MoneyMgmtStrategy(ts));
+			  }
+		  } catch (SQLException e) {     
+			  JDBCTutorialUtilities.printSQLException(e);
+		  } catch (Exception f){
+			  f.printStackTrace();
+		  } finally {
+			  if (stmt != null) { try {
+				stmt.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} }
+		  }
 	  }
-	  /* Method to CREATE an employee in the database */
+
+	  public  void loadTradeHistoryDataViaHibernate(List<MoneyMgmtStrategy> mms) {
+		  Session session = factory.openSession();
+		  try {
+			  String hql = "FROM TransactionData t " +
+					  	   "WHERE t.portfolio_id = :portfolioID" +
+					       "order by ORDERDATE, TRADE_ID";
+			  Query query = session.createQuery(hql);
+			  query.setParameter("portfolioID",this.getCurrentPortfolio().getId());
+			  List<TransactionData> transactions = query.list();
+			  transactions.forEach(t->mms.add(new MoneyMgmtStrategy((t))));
+		  } catch (Exception e) {
+			  e.printStackTrace();
+		  } 	
+	  }
+
 	   public Integer addTrade(TransactionData ts){
 	      Session session = factory.openSession();
 	      Transaction tx = null;
@@ -479,7 +510,10 @@ import org.hibernate.cfg.Configuration;
 		
 		private String getCurrentProject() {
 			return this.getBelongsToGUI().getCurrentProject();
-		}		    
+		}		
+		private Portfolio getCurrentPortfolio() {
+			return this.getBelongsToGUI().getCurrentPortfolioGroup().getPortfolioEntity();
+		}
 		public static void main(String[] args)  {
 		      try{
 		         factory = new Configuration().configure().buildSessionFactory();

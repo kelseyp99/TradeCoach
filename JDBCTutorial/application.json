@@ -1,25 +1,26 @@
 {
     "redis_url" : "localhost:6379",
     "prefixes_file" : "prefixes.conf",
-    "filename" : "C:\\Users\\Phil\\Google Drive\\Stock Market\\Trades2.csv"
+    "filename" : "C:\\Users\\Phil\\Google Drive\\Stock Market\\Trades2.csv",
     
     "dbSerializer" : {
         "url" : "jdbc:postgresql://localhost:5444/datanovo_dev",
-        "username" : "root",
+        "username" : "enterprisedb",
         "password" : "4030",
         "flush_barrier" : 1,
         "forced_flushing_period" : 3,
         "batch_size" : 1,
         "create_schema" : false,
-        "redis_queue_name" : "patentsToDBQueue"
+        "redis_queue_name" : "patentsToDBQueue",
+        "use_hibernate_orm" : true
     },
 
     "dbSerializerDerby" : {
-        "dbms" : "derby"
-        "jar_file" : "C:\\Users\\Phil\\OneDrive\\TradsCoach\\TradeCoach.jar"
-        "driver : "org.apache.derby.jdbc.EmbeddedDriver"
-        "server_name" : "localhost"
-        "port_number" : 3306"
+        "dbms" : "derby",
+        "jar_file" : "C:\\Users\\Phil\\OneDrive\\TradsCoach\\TradeCoach.jar",
+        "driver" : "org.apache.derby.jdbc.EmbeddedDriver",
+        "server_name" : "localhost",
+        "port_number" : 3306,
         "url" : "jdbc:postgresql://localhost:3306/prod",
         "username" : "root",
         "password" : "4030",

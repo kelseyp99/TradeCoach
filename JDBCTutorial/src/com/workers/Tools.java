@@ -8,7 +8,9 @@ package com.workers;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import com.workers.*;
+
+import javax.swing.JOptionPane;
+
 import com.tradecoach.patenter.entity.security.InitialEntry;
 import com.tradecoach.patenter.entity.security.Order;
 import com.tradecoach.patenter.entity.security.SimpleExit;
@@ -16,12 +18,9 @@ import com.tradecoach.patenter.entity.security.Stop;
 import com.tradecoach.patenter.entity.security.StopLoss;
 import com.tradecoach.patenter.entity.security.TrailingStop;
 import com.utilities.GlobalVars;
-import com.utilities.GlobalVars.*;
-import javax.swing.JOptionPane;
+import com.utilities.GlobalVars.typeSignal;
 
-import org.apache.commons.lang.StringUtils;
-
-import com.utilities.GlobalVars.*;
+import antlr.StringUtils;
 
 public class Tools {
 	/**

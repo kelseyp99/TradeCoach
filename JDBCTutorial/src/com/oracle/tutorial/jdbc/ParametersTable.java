@@ -28,10 +28,10 @@ import com.gui.GUI;
 import com.sun.glass.ui.MenuItem;
 import com.tradecoach.patenter.entity.security.CandleSticks;
 import com.tradecoach.patenter.entity.security.Parameter;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.MoneyMgmtStrategy;
 import com.workers.Portfolio;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
+import com.workers.SecurityInst;
 
 	public class ParametersTable  extends Tables {
 	//	private boolean RefreshOnlineDafault;
@@ -39,7 +39,7 @@ import com.workers.Portfolios;
 		private HashMap<String, Parameter> parameters = new HashMap<String, Parameter>();
 		private static SessionFactory factory; 
 		
-	  public ParametersTable(Connection connArg, String dbNameArg, String dbmsArg, Portfolios belongsTo) {
+	  public ParametersTable(Connection connArg, String dbNameArg, String dbmsArg, PortfoliosGroup belongsTo) {
 		    super(connArg, dbNameArg, dbmsArg, belongsTo, "PARAMETERS");
 		    this.setDdlCreate("CREATE TABLE APP.PARAMETERS (	 " +
 		    		"PORTFOLIO_NAME varchar(20) , " +
@@ -51,6 +51,10 @@ import com.workers.Portfolios;
 		    	") ");
 		    this.initialize();
 	}	 
+		public ParametersTable(PortfoliosGroup belongsTo) {
+	  super(belongsTo, "PORTFOLIO_HOLDINGS");
+	  this.initialize();
+	}
 		public void initialize(){
 			super.initialize(this.getDdlCreate());			
 		}

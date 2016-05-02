@@ -47,7 +47,6 @@ import java.util.Vector;
 import com.gui.*;
 import com.tradecoach.patenter.entity.security.CandleStick;
 import com.tradecoach.patenter.entity.security.CandleSticks;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
@@ -60,7 +59,8 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.sql.ordering.antlr.Factory;
 
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
+import com.workers.SecurityInst;
 import com.workers.Tools;
 
 public class HistoricalPricesTable extends Tables {
@@ -75,7 +75,7 @@ public class HistoricalPricesTable extends Tables {
 		  hpt.saveCandleStickPriceData(cs);
 	  }
 	  public HistoricalPricesTable(){}
-	  public HistoricalPricesTable(Connection connArg, String dbNameArg, String dbmsArg, Portfolios belongsTo) {
+	  public HistoricalPricesTable(Connection connArg, String dbNameArg, String dbmsArg, PortfoliosGroup belongsTo) {
 		    super(connArg, dbNameArg, dbmsArg, belongsTo, "HISTORICAL_PRICES");
 		    this.setDdlCreate("CREATE TABLE APP.HISTORICAL_PRICES (  TICKER_SYMBOL VARCHAR(20) NOT NULL, "+
 													    		"TRADEDATE DATE NOT NULL, "+
@@ -91,7 +91,11 @@ public class HistoricalPricesTable extends Tables {
 		    super.initialize(this.getDdlCreate());
 	}
 	  
-	  public void saveAllSecuritiesPriceData(){
+	  public HistoricalPricesTable(PortfoliosGroup belongsTo) {
+	  super(belongsTo, "HISTORICAL_PRICES");
+	  this.initialize();
+	}
+	public void saveAllSecuritiesPriceData(){
 		  
 		  Iterator<SecurityInst> i = this.getBelongsTo().getInitialPortfolio().getHoldingSet().iterator();
 	        while (i.hasNext()) {

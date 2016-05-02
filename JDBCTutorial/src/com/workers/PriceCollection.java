@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,7 +26,6 @@ import com.tradecoach.patenter.entity.security.CandleStick;
 import com.tradecoach.patenter.entity.security.CandleSticks;
 import com.tradecoach.patenter.entity.security.EntityBean;
 import com.tradecoach.patenter.entity.security.IEntityBean;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.utilities.GlobalVars;
 
 public abstract class PriceCollection extends EntityBean implements GlobalVars, IEntityBean {

@@ -6,6 +6,7 @@ package com.tradecoach.patenter.entity.security;
 
 import com.utilities.GlobalVars.*;
 import com.workers.PatternFormation;
+import com.workers.SecurityInst;
 
 import java.util.ArrayList;
 import java.util.Calendar;

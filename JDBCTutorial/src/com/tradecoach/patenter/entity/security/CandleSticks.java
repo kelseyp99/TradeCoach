@@ -3,14 +3,42 @@ package com.tradecoach.patenter.entity.security;
 //import PatternTypes.IPatternType;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 
 import com.utilities.GlobalVars;
+import com.workers.SecurityInst;
+@Entity
+@Table(name = "price_collections")
+public class CandleSticks extends EntityBean  implements IEntityBean, GlobalVars {
+	@Id
+	@GeneratedValue(generator = "foreigngen")
+	@GenericGenerator(strategy = "foreign", name="foreigngen",
+	parameters = @Parameter(name = "property", value="security"))
+	@Column(name = "ID") private Integer id;
+	@Transient private CandleStick highestHighCS;
+	@Transient private CandleStick lowestLowCS;
+	@OneToOne(mappedBy = "candleSticks") private Securities security;
+	@Transient private SecurityInst belongsTo;	
 
-public class CandleSticks implements GlobalVars {
-	
-	CandleStick highestHighCS, lowestLowCS;
-	SecurityInst belongsTo;
-	
+	@OneToMany(mappedBy = "candleSticks", cascade = CascadeType.ALL)
+	private Set<CandleStick> candleStick = new HashSet<CandleStick>();
+
 	protected ArrayList<CandleStick> candleSticks;
      	public CandleSticks(SecurityInst si) {
 			super();

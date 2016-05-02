@@ -9,7 +9,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import com.oracle.tutorial.jdbc.ParametersTable;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
 
 import java.awt.Toolkit;
 import javax.swing.JFormattedTextField;
@@ -178,8 +178,8 @@ public class Settings extends JDialog {
 		return this.getPortfolios().getParametersTable();		
 	}
 
-	private Portfolios getPortfolios() {
-		return this.getBelongsToGUI().getPortfolios();
+	private PortfoliosGroup getPortfolios() {
+		return this.getBelongsToGUI().getPortfoliosGroup();
 	}
 
 	public JCheckBox getChckbxRefreshYql() {

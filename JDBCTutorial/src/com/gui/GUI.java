@@ -51,9 +51,10 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import com.sun.javafx.applet.Splash;
+import com.tradecoach.patenter.entity.security.Portfolio;
 import com.typesafe.config.ConfigFactory;
-import com.workers.Portfolio;
-import com.workers.Portfolios;
+import com.workers.PortfolioGroup;
+import com.workers.PortfoliosGroup;
 import com.workers.Tools;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -78,7 +79,7 @@ import javax.swing.event.MenuKeyEvent;
 
 public class GUI  implements com.utilities.GlobalVars , TableModelListener  { 
 	private JFrame frmTradecoach;
-	private Portfolios portfolios;
+	private PortfoliosGroup portfoliosGroup;
 	private JTextArea textArea, textArea_1;
 	private JTextPane tpAnalysis;
 	private JTextPane tpSenarios;	
@@ -117,6 +118,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 	private HTMLDocument htmlDocument;
 	private HTMLEditorKit htmlEditorKit;
 	private String CurrentProject = "DEFAULT PORTFOLIO";
+	private PortfolioGroup currentPortfolioGroup;
 	private JMenu mnRecentProjects;
 	private MRU topMRU;
 	private JLabel statusLabel;
@@ -161,8 +163,8 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 	private void initialize() {
 		try {
 		//	portfolios = new  Portfolios(propertiesfile);
-			portfolios = new Portfolios(ConfigFactory.parseFile(new File("application.json")),gui);
-			portfolios.start();
+			portfoliosGroup = new PortfoliosGroup(ConfigFactory.parseFile(new File("application.json")),gui);
+			portfoliosGroup.start();
 		} catch (Exception e2) {			
 			e2.printStackTrace();
 		}
@@ -229,7 +231,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
                         int index = columnModel.getColumnIndexAtX(p.x);
                         int realIndex = columnModel.getColumn(index).getModelIndex();
                       // columnToolTips[realIndex];
-                        return portfolios.getTradeHistoryTable().getColumnToolTips()[realIndex];
+                        return portfoliosGroup.getTradeHistoryTable().getColumnToolTips()[realIndex];
                     }
                 };
             }
@@ -256,9 +258,9 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					String filename = "C:\\Users\\Phil\\Google Drive\\Stock Market\\Trades2.csv";
-					portfolios.getInitialPortfolio().getDl().loadCSVfile2(filename);
+					portfoliosGroup.getInitialPortfolio().getDl().loadCSVfile2(filename);
 					try {
-						portfolios.getTradeHistoryTable().viewTable((DefaultTableModel) tableMyTrades.getModel());
+						portfoliosGroup.getTradeHistoryTable().viewTable((DefaultTableModel) tableMyTrades.getModel());
 					} catch (SQLException e) {
 						
 						e.printStackTrace();
@@ -394,7 +396,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 		btnDump.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {				
 				String sFileName = getFileName();
-				portfolios.getTradeHistoryTable().exportData(sFileName);
+				portfoliosGroup.getTradeHistoryTable().exportData(sFileName);
 			}
 		});
 		
@@ -402,7 +404,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 		btnLoadMyTradesButton.setIcon(new ImageIcon(GUI.class.getResource("/com/gui/images/document-import-icon.png")));
 		btnLoadMyTradesButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {				
-				portfolios.importTradeHistoryDataFromCSVwithDELETE();
+				portfoliosGroup.importTradeHistoryDataFromCSVwithDELETE();
 			}
 		});
 		btnLoadMyTradesButton.setToolTipText("Import my trades from Excel file");
@@ -533,7 +535,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 				                    null,//null result in textbox instead of combobox
 				                    "");		
 				if ((s != null) && (s.length() > 0)) {
-					if(portfolios.getPortfoliosTable().projectNameAlreadyExists(s)){
+					if(portfoliosGroup.getPortfoliosTable().projectNameAlreadyExists(s)){
 						JOptionPane.showMessageDialog(getFrmTradecoach(),
 							    String.format("Project with name '%s' already exists.\n  No new project was created", s),
 							    "Inane warning",
@@ -542,11 +544,11 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 					} else {
 						try {
 							setCurrentProject(s);
-							Portfolio p = new Portfolio();
+							PortfolioGroup p = new PortfolioGroup();
 							p.setPortfolioName(getCurrentProject());
-							portfolios.getPortfoliosTable().savePortfolioInfo(p);
+							portfoliosGroup.getPortfoliosTable().savePortfolioInfo(p);
 							statusLabel.setText(getCurrentProject());							
-							portfolios.getParametersTable().addMRU(s);
+							portfoliosGroup.getParametersTable().addMRU(s);
 						} catch (SQLException e) {
 							e.printStackTrace();
 						}
@@ -569,7 +571,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 			//	Object[] possibilities = {"Default Portfolio", "spam", "yam"};
 				Object[] possibilities = null;
 				try {
-					possibilities = portfolios.getPortfoliosTable().getProjectNameList();
+					possibilities = portfoliosGroup.getPortfoliosTable().getProjectNameList();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
@@ -585,7 +587,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 					try {
 						setCurrentProject(s);
 						statusLabel.setText(s);					
-						portfolios.getParametersTable().addMRU(s);
+						portfoliosGroup.getParametersTable().addMRU(s);
 					} catch (SQLException e) {
 						e.printStackTrace();
 					}
@@ -603,7 +605,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 			public void actionPerformed(ActionEvent arg0) {
 				Object[] possibilities = null;
 				try {
-					possibilities = portfolios.getPortfoliosTable().getProjectNameList();
+					possibilities = portfoliosGroup.getPortfoliosTable().getProjectNameList();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
@@ -627,9 +629,9 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 						statusLabel.setText("Default Portfolio");
 					}						
 					//	statusLabel.setText(s);
-					Portfolio p = new Portfolio();					
+					PortfolioGroup p = new PortfolioGroup();					
 					p.setPortfolioName(s);
-					portfolios.getPortfoliosTable().deletePortfolioInfo(p, getFrmTradecoach());
+					portfoliosGroup.getPortfoliosTable().deletePortfolioInfo(p, getFrmTradecoach());
 				}
 				return;
 			}	
@@ -646,7 +648,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 		menu.add(mntmLoadTradeData);
 		mntmLoadTradeData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {			
-				portfolios.importTradeHistoryDataFromCSVwithDELETE();
+				portfoliosGroup.importTradeHistoryDataFromCSVwithDELETE();
 			}
 		});
 		
@@ -660,7 +662,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 		menu.add(mntmAppendDataTo_1);
 		mntmAppendDataTo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				portfolios.importTradeHistoryDataFromCSV();
+				portfoliosGroup.importTradeHistoryDataFromCSV();
 			}
 		});
 		
@@ -772,7 +774,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 		JMenuItem mntmUpdateHistoricalPrice = new JMenuItem("Update Historical Price Data");
 		mntmUpdateHistoricalPrice.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				portfolios.getInitialPortfolio().loadHistoricalPriceData();
+				portfoliosGroup.getInitialPortfolio().loadHistoricalPriceData();
 			}
 		});
 		mnData.add(mntmUpdateHistoricalPrice);
@@ -863,31 +865,25 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
     	this.textArea.setText(null);
 		this.createStyleSheet();
     	try {
-    		Thread thread = new Thread(new Runnable() {			
-
+    		Thread thread = new Thread(new Runnable() {		
 				@Override
     			public void run() {
-    			//	System.out.println("Time now is " + (new Date()));
-    			//	double start = System.currentTimeMillis();
-					//Tools.carriageReturn();
-					//Tools.drawSeprator();
-					//Tools.carriageReturn();
-					portfolios.setHtmlTextPane("<h1>Results of My Trading Activities</h1>");
-					portfolios.appendHtmlTextPane(String.format("<i>%s</i><br><br>",dfLongDateAndTime.format(new Date())));
-					portfolios.appendHtmlTextPane(String.format("<div id=\"ROI\">Portfolio Weighted Average ROI: <span style=\"color:red\">%s</span></div>",getRoiPlugString()));
-					if(portfolios.getInitialPortfolio().isAlreadyRanMyResults()){
-						portfolios.getInitialPortfolio().reset4MyResultsRerun();
+					portfoliosGroup.setHtmlTextPane("<h1>Results of My Trading Activities</h1>");
+					portfoliosGroup.appendHtmlTextPane(String.format("<i>%s</i><br><br>",dfLongDateAndTime.format(new Date())));
+					portfoliosGroup.appendHtmlTextPane(String.format("<div id=\"ROI\">Portfolio Weighted Average ROI: <span style=\"color:red\">%s</span></div>",getRoiPlugString()));
+					if(portfoliosGroup.getInitialPortfolio().isAlreadyRanMyResults()){
+						portfoliosGroup.getInitialPortfolio().reset4MyResultsRerun();
 					//	getMyResultsTextPane().setText("");
 				//		portfolios.setHtmlMyResultsTextPane("");
 					}
-					portfolios.getInitialPortfolio().setAlreadyRanMyResults(true);
-					portfolios.getInitialPortfolio().executeOrders();
+					portfoliosGroup.getInitialPortfolio().setAlreadyRanMyResults(true);
+					portfoliosGroup.getInitialPortfolio().executeOrders();
 					
 					SwingUtilities.invokeLater(new Runnable() {    						
 						@Override
 						public void run() {	
 							try {
-								portfolios.insertMyResultsROI();
+								portfoliosGroup.insertMyResultsROI();
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -958,21 +954,21 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
     						public void run() {	textArea.append("Building Initial Portfolio\n");		}
     					});
    	
-    					portfolios.setBelongsToGUI(gui);
+    					portfoliosGroup.setBelongsToGUI(gui);
     				//	portfolios.buildTableInstances(propertiesfile);
-    					portfolios.buildTableInstances();
-    					portfolios.intialize(filename);
-    					portfolios.getTradeHistoryTable().setTableGUI(tableMyTrades);
-    					portfolios.getHistoricalPricesTable().setTableGUI(tableHistoricalPrices);
+    					portfoliosGroup.buildTableInstances();
+    					portfoliosGroup.intialize(filename);
+    					portfoliosGroup.getTradeHistoryTable().setTableGUI(tableMyTrades);
+    					portfoliosGroup.getHistoricalPricesTable().setTableGUI(tableHistoricalPrices);
     					//HistoricalPricesTableModel modelHistoricalPrices = new HistoricalPricesTableModel(portfolios.getHistoricalPricesTable());
-    					DefaultTableModel modelHistoricalPrices = new DefaultTableModel(portfolios.getHistoricalPricesTable().getColumnHeader(), 0);
+    					DefaultTableModel modelHistoricalPrices = new DefaultTableModel(portfoliosGroup.getHistoricalPricesTable().getColumnHeader(), 0);
     					//HistoricalPricesTableModel modelHistoricalPrices = new HistoricalPricesTableModel(portfolios.getHistoricalPricesTable().getColumnHeader(), 0);
     					//MyTableModel modelMyTrades = new MyTableModel(portfolios.getTradeHistoryTable().getColumnHeader(), 0);
-    					MyTableModel modelMyTrades = new MyTableModel(portfolios.getTradeHistoryTable());
+    					MyTableModel modelMyTrades = new MyTableModel(portfoliosGroup.getTradeHistoryTable());
     					modelMyTrades.setBelongsToGUI(gui);
     			//		SecuritiesTableModel modelSecurities = new SecuritiesTableModel(portfolios.getSecurityInstTable().getColumnHeader(), 0);
-						portfolios.getSecurityInstTable().setTableGUI(tableSecurities);
-    					SecuritiesTableModel modelSecurities = new SecuritiesTableModel(portfolios.getSecurityInstTable());
+						portfoliosGroup.getSecurityInstTable().setTableGUI(tableSecurities);
+    					SecuritiesTableModel modelSecurities = new SecuritiesTableModel(portfoliosGroup.getSecurityInstTable());
     			//		Object[] cc = {"Select","Portfilio ID","Symbol","Name","Beta"};
     				//	DefaultTableModel modelSecurities = new DefaultTableModel(cc,0);
     			//		SecuritiesTableModel modelSecurities = new SecuritiesTableModel(cc,0);
@@ -984,31 +980,31 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
     						public void run() {
     							try {
     							//	portfolios.getTradeHistoryTable().setTabelModel(modelMyTrades);
-    								portfolios.getTradeHistoryTable().viewTable(modelMyTrades);
+    								portfoliosGroup.getTradeHistoryTable().viewTable(modelMyTrades);
     								tableMyTrades.setModel(modelMyTrades);
     							//	modelMyTrades.initialize();
-    								portfolios.getHistoricalPricesTable().viewTable(modelHistoricalPrices);
+    								portfoliosGroup.getHistoricalPricesTable().viewTable(modelHistoricalPrices);
     								tableHistoricalPrices.setModel(modelHistoricalPrices);
-    								portfolios.getSecurityInstTable().viewTable(modelSecurities);
+    								portfoliosGroup.getSecurityInstTable().viewTable(modelSecurities);
     								tableSecurities.setModel(modelSecurities);    								
     								
     							    TableColumn tc = tableSecurities.getColumnModel().getColumn(0);
     							    tc.setCellEditor(tableSecurities.getDefaultEditor(Boolean.class));
     							    tc.setCellRenderer(tableSecurities.getDefaultRenderer(Boolean.class));
-    							    tc.setHeaderRenderer((TableCellRenderer)portfolios.getSecurityInstTable().getTableMap().get(0).getColumnHeader());
+    							    tc.setHeaderRenderer((TableCellRenderer)portfoliosGroup.getSecurityInstTable().getTableMap().get(0).getColumnHeader());
     							  //  tc.getHeaderRenderer().getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5)
     							    //   tc.setHeaderRenderer(new CheckBoxHeader(new MyItemListener()));
     							    tableSecurities.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    							    tableSecurities.getColumnModel().getColumn(0).setPreferredWidth(portfolios.getSecurityInstTable().getColumnTableWidthAtPosition(0));
-    							    tableSecurities.getColumnModel().getColumn(1).setPreferredWidth(portfolios.getSecurityInstTable().getColumnTableWidth("Symbol"));
-    							    tableSecurities.getColumnModel().getColumn(2).setPreferredWidth(portfolios.getSecurityInstTable().getColumnTableWidth("Name"));
-    							    tableSecurities.getColumnModel().getColumn(3).setPreferredWidth(portfolios.getSecurityInstTable().getColumnTableWidth("Beta"));
+    							    tableSecurities.getColumnModel().getColumn(0).setPreferredWidth(portfoliosGroup.getSecurityInstTable().getColumnTableWidthAtPosition(0));
+    							    tableSecurities.getColumnModel().getColumn(1).setPreferredWidth(portfoliosGroup.getSecurityInstTable().getColumnTableWidth("Symbol"));
+    							    tableSecurities.getColumnModel().getColumn(2).setPreferredWidth(portfoliosGroup.getSecurityInstTable().getColumnTableWidth("Name"));
+    							    tableSecurities.getColumnModel().getColumn(3).setPreferredWidth(portfoliosGroup.getSecurityInstTable().getColumnTableWidth("Beta"));
     							 //   tableSecurities.getColumnModel().getColumn(4).setPreferredWidth(portfolios.getSecurityInstTable().getColumnIndexFromHeader("Symbol"));
 
     							    TableColumn tc2 = tableMyTrades.getColumnModel().getColumn(0);
     							    tc2.setCellEditor(tableMyTrades.getDefaultEditor(Boolean.class));
     							    tc2.setCellRenderer(tableMyTrades.getDefaultRenderer(Boolean.class));
-    							    tc2.setHeaderRenderer((TableCellRenderer)portfolios.getTradeHistoryTable().getTableMap().get(0).getColumnHeader());
+    							    tc2.setHeaderRenderer((TableCellRenderer)portfoliosGroup.getTradeHistoryTable().getTableMap().get(0).getColumnHeader());
     						    	
     							    int[] colLengths={25,55,65,355,100,65,65,65,105,65};
     							    for(int i=0; i<colLengths.length; i++)  
@@ -1025,7 +1021,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
     		    						}
     		    					});
     							    
-    								int q = portfolios.getTradeHistoryTable().getColumnIndexFromHeader("Stp Type")-0;
+    								int q = portfoliosGroup.getTradeHistoryTable().getColumnIndexFromHeader("Stp Type")-0;
     								setOrderTypeColumn(tableMyTrades, tableMyTrades.getColumnModel().getColumn(q));//set combo box combobox
     							    modelSecurities.setAllignment();    							    
     							    modelMyTrades.setAllignment();
@@ -1061,40 +1057,40 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
     					double start = System.currentTimeMillis();
     					Thread.sleep(1000);
     					//System.out.println("\nStarting Portfolio strategy optimizer\n");
-    					portfolios.setHtmlTextPane("<h1>Test Scenarios for ROI Maximization</h1>");
-    					portfolios.appendHtmlTextPane(String.format("<i>%s</i><br><br>",dfLongDateAndTime.format(new Date())));
-    					portfolios.appendHtmlTextPane(String.format("<div id=\"ROI\">Best Resulting Weighted Average ROI: <span style=\"color:red\">%s</span></div>",getRoiPlugString()));
+    					portfoliosGroup.setHtmlTextPane("<h1>Test Scenarios for ROI Maximization</h1>");
+    					portfoliosGroup.appendHtmlTextPane(String.format("<i>%s</i><br><br>",dfLongDateAndTime.format(new Date())));
+    					portfoliosGroup.appendHtmlTextPane(String.format("<div id=\"ROI\">Best Resulting Weighted Average ROI: <span style=\"color:red\">%s</span></div>",getRoiPlugString()));
 
     			//		if(portfolios.getInitialPortfolio().isAlreadyRanMyResults()){
     				//		portfolios.getInitialPortfolio().reset4MyResultsRerun();
     					//	getMyResultsTextPane().setText("");
     				//		portfolios.setHtmlMyResultsTextPane("");
     				//	}
-    					portfolios.getInitialPortfolio().setAlreadyRanMyResults(true);
+    					portfoliosGroup.getInitialPortfolio().setAlreadyRanMyResults(true);
     					int scenario2BCreated=5;
     					int layers2BCreated = 5;
     					double firstTriggerPctIncrease=0.04f;
     					double firstTrailingStpPct=0.05f;
-    					portfolios.setScenario2BCreated(scenario2BCreated);
-    					portfolios.setLayers2BCreated(layers2BCreated);
-    					portfolios.setFirstTrailingStpPct(firstTrailingStpPct);
-    					portfolios.setFirstTriggerPctIncrease(firstTriggerPctIncrease);
+    					portfoliosGroup.setScenario2BCreated(scenario2BCreated);
+    					portfoliosGroup.setLayers2BCreated(layers2BCreated);
+    					portfoliosGroup.setFirstTrailingStpPct(firstTrailingStpPct);
+    					portfoliosGroup.setFirstTriggerPctIncrease(firstTriggerPctIncrease);
     					
-    					portfolios.buildCandidatePortfoliosForMaxROI();
+    					portfoliosGroup.buildCandidatePortfoliosForMaxROI();
     					SwingUtilities.invokeLater(new Runnable() {    						
     						@Override
     						public void run() {	
     							try {
-    								portfolios.insertScenariosROI();
+    								portfoliosGroup.insertScenariosROI();
     							} catch (Exception e) {
     								e.printStackTrace();
     							}
     						}
     					});
     					
-    					portfolios.buildCandidatePortfoliosForMaxProfit();
-    					portfolios.critiqueTrades();
-    					portfolios.buildCandidatePortfoliosKnapsack();
+    					portfoliosGroup.buildCandidatePortfoliosForMaxProfit();
+    					portfoliosGroup.critiqueTrades();
+    					portfoliosGroup.buildCandidatePortfoliosKnapsack();
     					double end = System.currentTimeMillis();
     		    		double duration = (end - start) / 1000;
     					System.out.println("Find the optimal strategy took " + duration + " seconds.");
@@ -1116,10 +1112,10 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 		double start = System.currentTimeMillis();		
 		try {
 			textArea.append("Determing most optimal stragey for maximum ROI\n\n" );
-			portfolios.buildCandidatePortfoliosForMaxROI();
-			System.out.println(portfolios.toString2());
+			portfoliosGroup.buildCandidatePortfoliosForMaxROI();
+			System.out.println(portfoliosGroup.toString2());
 			textArea.setText(null);
-			textArea.append(portfolios.toString2());
+			textArea.append(portfoliosGroup.toString2());
 			this.setCandidateUnivLoaded(true);
 			double end = System.currentTimeMillis();
 			double duration = (end - start) / 1000;
@@ -1149,7 +1145,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 			textArea.append("Loading list of candidate securities for potential hedge\n\n" );
 //			p.setCandidateUniverse(tickerUFile2.getText());
 			textArea.append("Loading historical prices for candidate securites\n\n" );
-			portfolios.loadPriceDataUniverse();
+			portfoliosGroup.loadPriceDataUniverse();
 		//	textArea.append("Candidate securities successfully loaded\n\n" );
 			
 			this.setCandidateUnivLoaded(true);
@@ -1178,7 +1174,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 
 	public void buildHedge() throws IOException {
 		textArea.append("Corralating hedge candidates with your current portfolio\n\n" );
-		portfolios.getCandidateUniverse().corralateToOtherPortfolio( portfolios.getInitialPortfolio());
+		portfoliosGroup.getCandidateUniverse().corralateToOtherPortfolio( portfoliosGroup.getInitialPortfolio());
 		textArea.append("Building optimal portfolio to minimize VaR\n" );
 	//	int l = Integer.parseInt(tfNewLongs.getText());
 	//	int s = Integer.parseInt(tfNewShorts.getText());
@@ -1187,7 +1183,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 	//	p.buildCandidatePortfolios(l, s, c);
 	//	p.buildCandidatePortfolios(Integer.parseInt(tfNewLongs.getText()), Integer.parseInt(tfNewShorts.getText()), Double.parseDouble(tfMaxNewCapital.getText()));
 		textArea.setText(null);
-		textArea.append(portfolios.toString());
+		textArea.append(portfoliosGroup.toString());
 	//	((Appendable) textPane).append(p.toString());
     	textArea.append("*****************************************************************\n\n" );
     	System.out.println("*****************************************************************\n\n" );
@@ -1288,12 +1284,12 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 		this.gui = gui;
 	}
 
-	public Portfolios getPortfolios() {
-		return portfolios;
+	public PortfoliosGroup getPortfoliosGroup() {
+		return portfoliosGroup;
 	}
 
-	public void setPortfolios(Portfolios portfolios) {
-		this.portfolios = portfolios;
+	public void setPortfoliosGroup(PortfoliosGroup portfoliosGroup) {
+		this.portfoliosGroup = portfoliosGroup;
 	}
 
 	public JTextPane getTextArea_2() {
@@ -1485,6 +1481,12 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
 		this.setTopMRU(new MRU(this.getCurrentProject()));
 		
 	}
+	public PortfolioGroup getCurrentPortfolioGroup() {
+		return currentPortfolioGroup;
+	}
+	public void setCurrentPortfolioGroup(PortfolioGroup currentPortfolioGroup) {
+		currentPortfolioGroup = currentPortfolioGroup;
+	}
 	public JTable getTableMyTrades() {
 		return tableMyTrades;
 	}
@@ -1553,7 +1555,7 @@ public class GUI  implements com.utilities.GlobalVars , TableModelListener  {
         String columnName = model.getColumnName(column);
         model.getValueAt(row, column);
 
-    	java.util.Arrays.asList(portfolios.getTradeHistoryTable().getColumnHeader()).indexOf(columnName);
+    	java.util.Arrays.asList(portfoliosGroup.getTradeHistoryTable().getColumnHeader()).indexOf(columnName);
         
         
     }

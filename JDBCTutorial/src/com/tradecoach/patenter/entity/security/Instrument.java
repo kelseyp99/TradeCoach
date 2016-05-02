@@ -28,7 +28,7 @@ import com.utilities.GlobalVars;
 import com.workers.MarketCalendar;
 import com.workers.MoneyMgmtStrategy;
 import com.workers.Portfolio;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
 import com.workers.PriceCollection;
 import com.workers.Tools;
 
@@ -759,7 +759,7 @@ public class Instrument extends PriceCollection implements Runnable, Comparable<
 
 	}
 	
-	public Portfolios getBelongsToPortfolios() {
+	public PortfoliosGroup getBelongsToPortfolios() {
 		return this.getBelongsTo().getBelongsTo();
 	}
 	

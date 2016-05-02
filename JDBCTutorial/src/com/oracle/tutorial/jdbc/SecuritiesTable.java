@@ -24,13 +24,13 @@ import org.hibernate.Transaction;
 import com.gui.CheckBoxHeader;
 import com.gui.GUI;
 import com.tradecoach.patenter.entity.security.CandleSticks;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.MoneyMgmtStrategy;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
+import com.workers.SecurityInst;
 
 	public class SecuritiesTable extends Tables {
 
-	  public SecuritiesTable(Connection connArg, String dbNameArg, String dbmsArg, Portfolios belongsTo) {
+	  public SecuritiesTable(Connection connArg, String dbNameArg, String dbmsArg, PortfoliosGroup belongsTo) {
 		    super(connArg, dbNameArg, dbmsArg, belongsTo, "SECURITIES");
 		    this.setDdlCreate("CREATE TABLE APP.SECURITIES (" +
 								    	//	"PORTFOLIO_ID INTEGER , "+
@@ -42,6 +42,10 @@ import com.workers.Portfolios;
 		    				  				") ");
 		    this.initialize();
 	}	  
+    public SecuritiesTable(PortfoliosGroup belongsTo) {
+	  super(belongsTo, "SECURITIES");
+	  this.initialize();
+	 }
 		public void initialize(){
 			super.initialize(this.getDdlCreate());
 			try {

@@ -6,7 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.swing.SwingUtilities;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
 import com.workers.TransactionData;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -90,7 +90,7 @@ public class NewTradeEntry extends JDialog implements TableModelListener {
 					public void focusLost(FocusEvent arg0) {
 						tableNewTrades.setValueAt(tfSymbol.getText(), getRowNum(), 0);
 			            try {
-							String companyName = getBelongsTo().getPortfolios().getSecurityInstTable().getSecuritiesName(tfSymbol.getText());
+							String companyName = getBelongsTo().getPortfoliosGroup().getSecurityInstTable().getSecuritiesName(tfSymbol.getText());
 							tfCompanyName.setText(companyName);
 						} catch (SQLException e) {
 							e.printStackTrace();
@@ -329,12 +329,12 @@ public class NewTradeEntry extends JDialog implements TableModelListener {
 		return belongsTo;
 	}
 
-	public Portfolios getBelongsToPortfolios() {
-		return belongsTo.getPortfolios();
+	public PortfoliosGroup getBelongsToPortfolios() {
+		return belongsTo.getPortfoliosGroup();
 	}
 
 	public Portfolio getInitialPortfolio() {
-		return belongsTo.getPortfolios().getInitialPortfolio();
+		return belongsTo.getPortfoliosGroup().getInitialPortfolio();
 	}
 
 	public void setBelongsTo(GUI belongsTo) {
@@ -460,7 +460,7 @@ public class NewTradeEntry extends JDialog implements TableModelListener {
 	public class NewTradeTable extends Tables {	  
 		//private Connection myConnection = myJDBCTutorialUtilities.getConnection();
 		
-		public NewTradeTable(Connection connArg, String dbNameArg, String dbmsArg, Portfolios belongsTo) {
+		public NewTradeTable(Connection connArg, String dbNameArg, String dbmsArg, PortfoliosGroup belongsTo) {
 			super(connArg, dbNameArg, dbmsArg, belongsTo, "TRADE_HISTORY");
 			this.initialize();
 		}

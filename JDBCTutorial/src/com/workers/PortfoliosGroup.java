@@ -2,6 +2,7 @@ package com.workers;
 
 import com.gui.GUI;
 import com.gui.NewTradeEntry;
+import com.junk.Portfolio;
 import com.oracle.tutorial.jdbc.HistoricalPricesTable;
 import com.oracle.tutorial.jdbc.JDBCTutorialUtilities;
 import com.oracle.tutorial.jdbc.ParametersTable;
@@ -9,8 +10,8 @@ import com.oracle.tutorial.jdbc.PortfolioHoldingsTable;
 import com.oracle.tutorial.jdbc.PortfoliosTable;
 import com.oracle.tutorial.jdbc.SecuritiesTable;
 import com.oracle.tutorial.jdbc.TradeHistoryTable;
+import com.tradecoach.patenter.db.HibernateUtils;
 import com.tradecoach.patenter.entity.security.Layers;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.utilities.BuildScripts;
@@ -29,8 +30,10 @@ import java.util.Date;
 import java.util.InvalidPropertiesFormatException;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -41,17 +44,18 @@ import javax.swing.table.TableModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTMLDocument;
- 
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Portfolios implements GlobalVars, Runnable{
-	private Portfolio initialPortfolio;
-	private ArrayList<Portfolio> candidatePortfolios;//potential recommendation hedge
-	private Portfolio candidateUniverse, bestCandidatePortfolio;//all stocks to be considered
-	private Portfolio testUniverse;//all stocks to be considered
+public class PortfoliosGroup implements GlobalVars, Runnable{
+	private PortfolioGroup initialPortfolioGroup;
+	private ArrayList<PortfolioGroup> candidatePortfolios;//potential recommendation hedge
+	private PortfolioGroup candidateUniverse, bestCandidatePortfolio;//all stocks to be considered
+	private PortfolioGroup testUniverse;//all stocks to be considered
 	private MarketCalendar mc;
 	private int newShorts, newLongs, idNum, bestScenarioIdNum;
 	private Stack<Pcts4Lyer> Scenarios;
@@ -77,10 +81,13 @@ public class Portfolios implements GlobalVars, Runnable{
 	private Connection myConnection;
 	private Boolean refreshOnStart=true,useNativeJDBC=false;
 	private static SessionFactory factory; 
-    private static final Logger logger = LoggerFactory.getLogger(Portfolios.class);
-    private Portfolio app;
+    private static final Logger logger = LoggerFactory.getLogger(PortfoliosGroup.class);
+    private PortfolioGroup app;
+    private HibernateUtils dbHelper;
+    private Config config;
+	private Queue<SecurityInst> dbQueue = new ArrayBlockingQueue<>(10000);
 
-	public Portfolios()  {}
+	public PortfoliosGroup()  {}
 	/**creates a <b>DataLoader</b> instance from the <i>csv</i> file represented by <i>fileName</i>.  An initial <b>Portfilio</b> 
 	 * object is created and populated with historial data.
 	 * @param fileName
@@ -89,24 +96,24 @@ public class Portfolios implements GlobalVars, Runnable{
 	 * @throws FileNotFoundException 
 	 * @throws SQLException 
 	 */
-	public Portfolios(String propertiesFileName) throws FileNotFoundException, InvalidPropertiesFormatException, IOException, SQLException {
+	public PortfoliosGroup(String propertiesFileName) throws FileNotFoundException, InvalidPropertiesFormatException, IOException, SQLException {
 		this.setMyJDBCTutorialUtilities(new JDBCTutorialUtilities(propertiesFileName));
 		this.setMyConnection(myJDBCTutorialUtilities.getConnection());
 	//	this.intialize(fileName);
 	}//Portfolios
-	public Portfolios(Date startDate, Date endDate, String fileName) {
+	public PortfoliosGroup(Date startDate, Date endDate, String fileName) {
 		//make a list of all days in time sequence (even weekends)
 		mc = new MarketCalendar(startDate, endDate);
-		this.setInitialPortfolio(fileName);
+		this.setInitialPortfolioGroup(fileName);
 		this.loadPriceDataInitPort();
 	}//Portfolios
-	public Portfolios(Date startDate, Date endDate, List<MoneyMgmtStrategy> list) {
+	public PortfoliosGroup(Date startDate, Date endDate, List<MoneyMgmtStrategy> list) {
 		//make a list of all days in time sequence (even weekends)
 		mc = new MarketCalendar(startDate, endDate);
-		this.initialPortfolio = new Portfolio(mc, list, 0);
+		this.initialPortfolioGroup = new PortfolioGroup(mc, list, 0);
 		this.loadPriceDataInitPort();
 	}//Portfolios
-	public Portfolios(String filename, String propertiesFileName, GUI gui) {
+	public PortfoliosGroup(String filename, String propertiesFileName, GUI gui) {
 		try {
 			this.setBelongsToGUI(gui);
 			this.setMyJDBCTutorialUtilities(new JDBCTutorialUtilities(propertiesFileName));
@@ -119,16 +126,18 @@ public class Portfolios implements GlobalVars, Runnable{
 			e.printStackTrace();
 		}
 	}
-    public Portfolios(Config config, GUI gui) throws Exception {
-        this.setApp(new Portfolio(config).withProcessing().withDBModule());
+    public PortfoliosGroup(Config config, GUI gui) throws Exception {
+    	this.setConfig(config);
+        this.setApp(new PortfolioGroup(config).withProcessing().withDBModule());
 		this.setBelongsToGUI(gui);
-		buildTableInstances();
+		this.getApp().setBelongsTo(this);
+		this.buildTableInstances();
 		this.intialize(config.getString("filename"));
         Runtime.getRuntime().addShutdownHook(new Thread("myapp-shutdown-hook") {
             public void run() {
-                logger.info("Starting Application graceful shutdown...");
+                getLogger().info("Starting Application graceful shutdown...");
                 getApp().stop();
-                logger.info("Application shutdown complete.");
+                getLogger().info("Application shutdown complete.");
             }
         });
     }
@@ -142,7 +151,7 @@ public class Portfolios implements GlobalVars, Runnable{
 				this.setFactory(this.initHibernate());
 			//System.out.println("Creating Data Loader instance\n");
 			this.appendToTextArea("Creating Data Loader class instance\n");
-			this.setInitialPortfolio(fileName);
+			this.setInitialPortfolioGroup(fileName);
 			//	System.out.println("\n\nExtracting online price date from Yahoo Finance");
 			this.appendToTextArea("Extracting online price date from Yahoo Finance\n");
 			this.loadPriceDataInitPort();
@@ -158,10 +167,10 @@ public class Portfolios implements GlobalVars, Runnable{
 						"                              Method                Method\n" +
 						"                           ------------            -----------\n" +
 						"Existing Portfolio:\n" +
-						"    VaR @ 95% confidence:  " + ef.format(initialPortfolio.getaVaRs().get(typeVaR.HistVaR95))  + "             "
-						+ ef.format(initialPortfolio.getaVaRs().get(typeVaR.VarCoVaR95)) + "\n" +
-						"    VaR @ 99% confidence:  " + ef.format(initialPortfolio.getaVaRs().get(typeVaR.HistVaR99))  + "             "
-						+ ef.format(initialPortfolio.getaVaRs().get(typeVaR.VarCoVaR99)) + "\n" +
+						"    VaR @ 95% confidence:  " + ef.format(initialPortfolioGroup.getaVaRs().get(typeVaR.HistVaR95))  + "             "
+						+ ef.format(initialPortfolioGroup.getaVaRs().get(typeVaR.VarCoVaR95)) + "\n" +
+						"    VaR @ 99% confidence:  " + ef.format(initialPortfolioGroup.getaVaRs().get(typeVaR.HistVaR99))  + "             "
+						+ ef.format(initialPortfolioGroup.getaVaRs().get(typeVaR.VarCoVaR99)) + "\n" +
 						"\n\nRecommended Portfolio:\n" ;
 		if (candidatePortfolios.size() > 0) {
 			int x = candidatePortfolios.size()-1;
@@ -173,7 +182,7 @@ public class Portfolios implements GlobalVars, Runnable{
 							+ ef.format(candidatePortfolios.get(x).getaVaRs().get(typeVaR.VarCoVaR99)) + "\n\n";
 			//	+ "n/a\n\n";
 
-			int iFrom  = initialPortfolio.getSecurityCount() + 1 ;	
+			int iFrom  = initialPortfolioGroup.getSecurityCount() + 1 ;	
 			int iTo = candidatePortfolios.get(x).getHoldingSet().size() - 1;
 			s += candidatePortfolios.get(x).toStringPrintSecuritiesAt(iFrom, iTo );
 		} // if
@@ -181,6 +190,37 @@ public class Portfolios implements GlobalVars, Runnable{
 		//if
 		return s;
 	}
+	
+	public PortfoliosGroup withDBModule() throws SQLException {    	
+		this.setDbHelper(new HibernateUtils(getDbQueue(), this.getConfig().getConfig("dbSerializer")));		        
+		return this;
+	}
+
+		    public PortfoliosGroup withProcessing() throws ParserConfigurationException {
+	/*	    	prefixesQueue = (getConfig().getConfig("dbSerializer").getBoolean("parse_local_files"))?UtilTools.getXMLFileNames():redisson.getQueue(this.getConfig().getConfig("patentParser").getString("redis_queue_name"));
+		    	prefixesQueue.add("2015/09/08");
+		    	patentParsingProcessor = new PatentParsingProcessor(
+		    			this,
+		    			prefixesQueue,
+		    			pairDownloadingQueue,
+		    			getConfig().getConfig("patentParser"));
+		    	pairDownloadingProcessor = new PAIRDownloadingProcessor(
+		    			this,
+		    			pairDownloadingQueue,
+		    			pairParsingQueue,
+		    			dbQueue,
+		    			getConfig().getConfig("PAIRDownloader"));
+		    	pairParserProcessor = new PAIRParserProcessor(
+		    			this,
+		    			pairParsingQueue,
+		    			dbQueue,
+		    			getConfig().getConfig("PAIRParser"));
+
+		    	reportPrinter = new ReportPrinter(pairDownloadingProcessor, patentParsingProcessor, pairParserProcessor, pairDownloadingQueue, pairParsingQueue, prefixesQueue, dbQueue);
+		    	*/
+		    	return this;
+		    }
+
 	public String toString() {
 		String s = "Initial Portfolio:\n\n";
 		s+=this.getInitialPortfolio().toString();
@@ -209,20 +249,20 @@ public class Portfolios implements GlobalVars, Runnable{
 	@SuppressWarnings("unchecked")
 	public void setInitialPortfolio(List<String> list, List<Integer> positions) {
 		//create the initial portfilio from the tickers supplied by the user
-		this.initialPortfolio = new Portfolio(mc, list, positions);
+		this.initialPortfolioGroup = new PortfolioGroup(mc, list, positions);
 	}
 	/**
-	 * Create the initial <b>Portfolio</b> instance from the tickers supplied by the user
+	 * Create the initial <b>PortfolioGroup</b> instance from the tickers supplied by the user
 	 * @param fileName
 	 */
 	@SuppressWarnings("unchecked")
-	public void setInitialPortfolio(String fileName) {
+	public void setInitialPortfolioGroup(String fileName) {
 		//create the initial portfilio from the tickers supplied by the user
-		this.initialPortfolio = new Portfolio(fileName, this);
+		this.initialPortfolioGroup = new PortfolioGroup(fileName, this);
 	}
 
 	/**
-	 * This loads the daily price data of each <b>SecurityInst</b> of the <b>initialPortfolio</b> instance into a individual
+	 * This loads the daily price data of each <b>SecurityInst</b> of the <b>initialPortfolioGroup</b> instance into a individual
 	 * <b>Candlestick</b> object.
 	 * 
 	 * @return boolean
@@ -234,11 +274,11 @@ public class Portfolios implements GlobalVars, Runnable{
 			 * candlestick object.
 			 */		
 			//get to daily price for each ticker symbol from Yahoo
-			initialPortfolio.loadHistoricalPriceData();
+			initialPortfolioGroup.loadHistoricalPriceData();
 			this.getSecurityInstTable().saveAllSecuritiesInfo();
-			//sum the total change in portfolio value by date
-			//initialPortfolio.sumPL_by_Date();
-			//initialPortfolio.doVarianceCovariance();
+			//sum the total change in PortfolioGroup value by date
+			//initialPortfolioGroup.sumPL_by_Date();
+			//initialPortfolioGroup.doVarianceCovariance();
 			return true;
 		} catch (Exception e) {
 			
@@ -270,23 +310,25 @@ public class Portfolios implements GlobalVars, Runnable{
 	public void buildTableInstances() {
 		this.appendToTextArea("Creating Table class instances\n");
 		try {
-			tradeHistoryTable =
-					new TradeHistoryTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
-							myJDBCTutorialUtilities.dbms, this);
-			securitiesTable =
-					new SecuritiesTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
-							myJDBCTutorialUtilities.dbms, this);
-			setPortfoliosTable(new PortfoliosTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
-					myJDBCTutorialUtilities.dbms, this));	
-			historicalPricesTable =
-					new HistoricalPricesTable(this.getMyConnection(), myJDBCTutorialUtilities.dbName,
-							myJDBCTutorialUtilities.dbms, this); 
-			setPortfolioHoldingsTable(new PortfolioHoldingsTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
-					myJDBCTutorialUtilities.dbms, this));
-
-			setParametersTable(new ParametersTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
-					myJDBCTutorialUtilities.dbms, this));
-
+			this.setTradeHistoryTable(new TradeHistoryTable(this));
+//					new TradeHistoryTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
+//							myJDBCTutorialUtilities.dbms, this);
+			this.setSecurityInstTable(new SecuritiesTable(this));
+				//	new SecuritiesTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
+					//		myJDBCTutorialUtilities.dbms, this);
+			this.setPortfoliosTable(new PortfoliosTable(this));//new PortfoliosTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
+					//myJDBCTutorialUtilities.dbms, this));	
+			this.setHistoricalPricesTable(new HistoricalPricesTable(this));
+//			historicalPricesTable =
+//					new HistoricalPricesTable(this.getMyConnection(), myJDBCTutorialUtilities.dbName,
+//							myJDBCTutorialUtilities.dbms, this); 
+			this.setPortfolioHoldingsTable(new PortfolioHoldingsTable(this));
+//			setPortfolioHoldingsTable(new PortfolioHoldingsTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
+//					myJDBCTutorialUtilities.dbms, this));
+			this.setParametersTable(new ParametersTable(this));
+//			setParametersTable(new ParametersTable(getMyConnection(), myJDBCTutorialUtilities.dbName,
+//					myJDBCTutorialUtilities.dbms, this));
+//
 			String[][] DDL = BuildScripts.getBuildDDL();		      
 			for(String[] ddl:DDL) this.getPortfoliosTable().createViewIfMissing(ddl);
 
@@ -322,7 +364,7 @@ public class Portfolios implements GlobalVars, Runnable{
 	}
 		
 	public void appendToTextPane(String s, JTextPane tp) {
-		Portfolios p = this;
+		PortfoliosGroup p = this;
 	//	JTextPane tp = this.getBelongsToGUI().getMyResultsTextPane();
 		this.appendHtmlTextPane(s);
 		final String ssf =this.getHtmlTextPane();
@@ -372,7 +414,7 @@ public class Portfolios implements GlobalVars, Runnable{
 	}		
 	
 	public void buildCorraliations() {
-		candidateUniverse.corralateToOtherPortfolio(initialPortfolio);
+		candidateUniverse.corralateToOtherPortfolio(initialPortfolioGroup);
 	}
 
 	public void buildTestPortfolio () {
@@ -385,14 +427,14 @@ public class Portfolios implements GlobalVars, Runnable{
 		//	int longs = this.getNewLongs();
 		//		int shorts = this.getNewShorts();
 		// make a list of potential portfolios to be recommended
-		candidatePortfolios = new ArrayList<Portfolio>();		
+		candidatePortfolios = new ArrayList<PortfolioGroup>();		
 		//.... starting with 1/10th of the lesser of the portfolio's current value & allowed maximum capital ...
-		double pv = initialPortfolio.getPortfolioValue();
+		double pv = initialPortfolioGroup.getPortfolioValue();
 		int div = 10;
 		double capital = Math.min(Maxcapital, pv)/div;
 		//... and use the 95% VaR of the initial portfolio as a benchmark
-		double lastVar = initialPortfolio.getaVaRs().get(typeVaR.HistVaR95);
-		Portfolio p;
+		double lastVar = initialPortfolioGroup.getaVaRs().get(typeVaR.HistVaR95);
+		PortfolioGroup p;
 		while (capital <= Maxcapital) {
 			//... create copies of the initial portfolio then add new positions but only enough
 			// new shares (long & short) as can be bought with this amount of capital  ...
@@ -405,7 +447,7 @@ public class Portfolios implements GlobalVars, Runnable{
 						" P&L        P&L\n" +
 						"---------------\n\n");	
 				Map<Date,Double> treeMap2 = new TreeMap<Date, Double>(p.getDailyPL());
-				Map<Date,Double> treeMap1 = new TreeMap<Date, Double>(initialPortfolio.getDailyPL());
+				Map<Date,Double> treeMap1 = new TreeMap<Date, Double>(initialPortfolioGroup.getDailyPL());
 				int s = treeMap1.size()-1;
 				String t;
 
@@ -450,12 +492,12 @@ public class Portfolios implements GlobalVars, Runnable{
 		}	//while	
 	}
 
-	public Portfolio buildCandidatePortfolio(int longs, int shorts, double capital) {
+	public PortfolioGroup buildCandidatePortfolio(int longs, int shorts, double capital) {
 		/*
 		 * this method is called to create a clone of the initial portfolio and add additional holdings
 		 * based on the specified amounts of long and short positions
 		 */
-		Portfolio candidatePortfolio = new Portfolio(initialPortfolio);	
+		PortfolioGroup candidatePortfolio = new PortfolioGroup(initialPortfolioGroup);	
 		int s = candidateUniverse.getHoldingSet().size();
 		/*
 		 * limit the total positions to be added to no bigger than the current number of ticker symbols 
@@ -540,10 +582,10 @@ public class Portfolios implements GlobalVars, Runnable{
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	public Portfolio buildCandidatePortfolioForROI(MoneyMgmtStrategy mms) {
+	public PortfolioGroup buildCandidatePortfolioForROI(MoneyMgmtStrategy mms) {
 		/* this method is called to create a clone of the initial portfolio and add additional holdings
 		 * based on the specified amounts of long and short positions		 */
-		Portfolio candidatePortfolio = new Portfolio(initialPortfolio);	
+		PortfolioGroup candidatePortfolio = new PortfolioGroup(initialPortfolioGroup);	
 		candidatePortfolio.setBelongsTo(this);
 		MoneyMgmtStrategy mms2;		
 		for ( int i=0; i < candidatePortfolio.getHoldingSet().size(); i++) {				
@@ -594,13 +636,13 @@ public class Portfolios implements GlobalVars, Runnable{
 		//Tools.createSectionHeader(sTitle, sDiscussion);
 		this.appendHtmlTextPane(String.format("<p>%s</p><p>%s</p>",sTitle, sDiscussion));
 		// make a list of potential portfolios to be recommended
-		candidatePortfolios = new ArrayList<Portfolio>();		
+		candidatePortfolios = new ArrayList<PortfolioGroup>();		
 		this.createScenarios();	
 		//System.out.println(this.getScenarios().toString());	
 		this.appendHtmlTextPane(this.getScenariosHolderClass().toString());	
 		//... use the ROI of the initial portfolio as a benchmark
-		double lastROI = initialPortfolio.getROI();
-		Portfolio p;
+		double lastROI = initialPortfolioGroup.getROI();
+		PortfolioGroup p;
 		try {
 			while (this.moreScenarios()) {
 				MoneyMgmtStrategy mms = new MoneyMgmtStrategy() ;
@@ -692,7 +734,7 @@ public class Portfolios implements GlobalVars, Runnable{
 		this.setScenarios2(s);
 		scenariosHolderClass = new Pcts4Lyer(GlobalVars.groupType.Scenarios, this);
 	}
-	public void updatePortfolio (Portfolio candidatePortfolio, int i, double avgPosAmt) {
+	public void updatePortfolio (PortfolioGroup candidatePortfolio, int i, double avgPosAmt) {
 		double lastClosePrice;
 		int posD;
 		lastClosePrice = candidateUniverse.getHoldingSet().get(i).getLastClosePrice();
@@ -760,27 +802,27 @@ public class Portfolios implements GlobalVars, Runnable{
 		} //if
 	} //dumpPortfolioData
 	
-	public Portfolio getCandidateUniverse() {
+	public PortfolioGroup getCandidateUniverse() {
 		return candidateUniverse;
 	}
 
 	public void setCandidateUniverse(String fileName) {
-		this.candidateUniverse = new Portfolio(mc, fileName);
+		this.candidateUniverse = new PortfolioGroup(mc, fileName);
 	}	
 
 	public void setCandidateUniverse(List<String> list) {
-		this.candidateUniverse = new Portfolio(mc, list);
+		this.candidateUniverse = new PortfolioGroup(mc, list);
 	}
 
-	public Portfolio getInitialPortfolio() {
-		return initialPortfolio;
+	public PortfolioGroup getInitialPortfolio() {
+		return this.initialPortfolioGroup;
 	}
 
-	public ArrayList<Portfolio> getCandidatePortfolios() {
+	public ArrayList<PortfolioGroup> getCandidatePortfolios() {
 		return candidatePortfolios;
 	}
 
-	public void setCandidatePortfolios(ArrayList<Portfolio> candidatePortfolios) {
+	public void setCandidatePortfolios(ArrayList<PortfolioGroup> candidatePortfolios) {
 		this.candidatePortfolios = candidatePortfolios;
 	}
 
@@ -804,7 +846,7 @@ public class Portfolios implements GlobalVars, Runnable{
 		this.newLongs = newLongs;
 	}
 
-	public Portfolio getTestUniverse() {
+	public PortfolioGroup getTestUniverse() {
 		return testUniverse;
 	}
 
@@ -844,16 +886,16 @@ public class Portfolios implements GlobalVars, Runnable{
 		return !this.getScenarios().empty();
 	}
 
-	public void setTestUniverse(Portfolio testUniverse) {
+	public void setTestUniverse(PortfolioGroup testUniverse) {
 		this.testUniverse = testUniverse;
 	}
 
 
-	public Portfolio getBestCandidatePortfolio() {
+	public PortfolioGroup getBestCandidatePortfolio() {
 		return bestCandidatePortfolio;
 	}
 
-	public void setBestCandidatePortfolio(Portfolio bestCandidatePortfolio) {
+	public void setBestCandidatePortfolio(PortfolioGroup bestCandidatePortfolio) {
 		this.bestCandidatePortfolio = bestCandidatePortfolio;
 	}
 
@@ -912,7 +954,7 @@ public class Portfolios implements GlobalVars, Runnable{
 		private int layerCount, idNum;
 		Stack<Pcts4Lyer> stack = new Stack<Pcts4Lyer>();
 		private ArrayList<Pcts4Lyer> list;
-		private Portfolios belongsTo;
+		private PortfoliosGroup belongsTo;
 
 		/**Used to create a stack of Scenarios.  See the class description */
 		public Pcts4Lyer() {
@@ -920,7 +962,7 @@ public class Portfolios implements GlobalVars, Runnable{
 		}
 		
 		/**Used to create a holding class of <b>Scenario</b> instances.  See the class description */
-		public Pcts4Lyer(GlobalVars.groupType type, Portfolios belongsTo) {
+		public Pcts4Lyer(GlobalVars.groupType type, PortfoliosGroup belongsTo) {
 			this.setGroupType(type);
 			this.setBelongsTo(belongsTo);
 			if(type==GlobalVars.groupType.Scenarios) 	
@@ -1147,11 +1189,11 @@ public class Portfolios implements GlobalVars, Runnable{
 			this.idNum = idNum;
 		}
 
-		public Portfolios getBelongsTo() {
+		public PortfoliosGroup getBelongsTo() {
 			return belongsTo;
 		}
 
-		public void setBelongsTo(Portfolios belongsTo) {
+		public void setBelongsTo(PortfoliosGroup belongsTo) {
 			this.belongsTo = belongsTo;
 		}
 	} //class pctLyer   
@@ -1225,11 +1267,11 @@ public class Portfolios implements GlobalVars, Runnable{
 	public class Lock{
 		private int scenarioNum = 0;
 		Stack<SecurityInst> st = new Stack<SecurityInst>();
-		Portfolios belongsTo;
+		PortfoliosGroup belongsTo;
 		SecurityInst csi;
 		private boolean isLocked = false;
 
-		public  Lock(Portfolios p) {
+		public  Lock(PortfoliosGroup p) {
 			this.setBelongsTo(p);
 			this.init();
 		}
@@ -1292,11 +1334,11 @@ public class Portfolios implements GlobalVars, Runnable{
 		}
 
 		/**set which <b>Portfolios</b> object this <b>Portfolio</b> object belongs too*/
-		public Portfolios getBelongsTo() {
+		public PortfoliosGroup getBelongsTo() {
 			return belongsTo;
 		}
 		/**set which <b>Portfolios</b> object this <b>Portfolio</b> object belongs too*/
-		public void setBelongsTo(Portfolios belongsTo) {
+		public void setBelongsTo(PortfoliosGroup belongsTo) {
 			this.belongsTo = belongsTo;
 		}
 
@@ -1315,13 +1357,13 @@ public class Portfolios implements GlobalVars, Runnable{
 		private int signals = 0;
 		private int scenarioNum = 0;
 		Stack<SecurityInst> st = new Stack<SecurityInst>();
-		Portfolios belongsTo;
+		PortfoliosGroup belongsTo;
 		SecurityInst csi;
 		
 		public void CountingSemaphore() {
 		}
 		
-		public void CountingSemaphore(Portfolios p) {
+		public void CountingSemaphore(PortfoliosGroup p) {
 			this.setBelongsTo(p);
 			st.addAll(this.getBelongsTo().getInitialPortfolio().getHoldingSet());
 			csi=st.pop();
@@ -1345,11 +1387,11 @@ public class Portfolios implements GlobalVars, Runnable{
 		}
 		
 		/**set which <b>Portfolios</b> object this <b>Portfolio</b> object belongs too*/
-		public Portfolios getBelongsTo() {
+		public PortfoliosGroup getBelongsTo() {
 			return belongsTo;
 		}
 		/**set which <b>Portfolios</b> object this <b>Portfolio</b> object belongs too*/
-		public void setBelongsTo(Portfolios belongsTo) {
+		public void setBelongsTo(PortfoliosGroup belongsTo) {
 			this.belongsTo = belongsTo;
 		}
 		
@@ -1497,7 +1539,7 @@ public void setUseNativeJDBC(Boolean useNativeJDBC) {
 		String html ="<p><h1>These are the Trailing Stops for you to apply</h1></p>";
 		int rows = newTradeEntry.getTable().getModel().getRowCount();
 		int cols = newTradeEntry.getTable().getModel().getColumnCount();
-		Portfolio p = null;
+		PortfolioGroup p = null;
 		MoneyMgmtStrategy mms = null;
 		TableModel tm = newTradeEntry.getTable().getModel();
 		java.sql.Date today =  new java.sql.Date(Calendar.getInstance().getTime().getTime());
@@ -1593,10 +1635,32 @@ public void setUseNativeJDBC(Boolean useNativeJDBC) {
 	public void setFactory(SessionFactory factory) {
 		this.factory = factory;
 	}
-	public Portfolio getApp() {
+	public PortfolioGroup getApp() {
 		return app;
 	}
-	public void setApp(Portfolio app) {
-		this.app = app;
-	}	
+	public void setApp(PortfolioGroup portfolioGroup) {
+		this.app = portfolioGroup;
+	}
+	public static Logger getLogger() {
+		return logger;
+	}
+	public Config getConfig() {
+		return config;
+	}
+	public void setConfig(Config config) {
+		this.config = config;
+	}
+	public HibernateUtils getDbHelper() {
+		return dbHelper;
+	}
+	public void setDbHelper(HibernateUtils dbHelper) {
+		this.dbHelper = dbHelper;
+	}
+	public Queue<SecurityInst> getDbQueue() {
+		return dbQueue;
+	}
+	public void setDbQueue(Queue<SecurityInst> dbQueue) {
+		this.dbQueue = dbQueue;
+	}
+
 }

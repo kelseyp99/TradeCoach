@@ -1,4 +1,4 @@
-package com.tradecoach.patenter.entity.security;
+package com.workers;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -35,13 +35,11 @@ import org.jdom2.input.SAXBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 
+import com.tradecoach.patenter.entity.security.CandleStick;
+import com.tradecoach.patenter.entity.security.CandleSticks;
+import com.tradecoach.patenter.entity.security.Legs;
 import com.utilities.GlobalVars;
-import com.workers.MarketCalendar;
-import com.workers.MoneyMgmtStrategy;
-import com.workers.Portfolio;
-import com.workers.Portfolios;
-import com.workers.PriceCollection;
-import com.workers.Tools;
+import com.workers.PortfolioGroup;
 
 import antlr.StringUtils;
 
@@ -49,51 +47,26 @@ import antlr.StringUtils;
 @Table(name = "securities")
 public class SecurityInst extends PriceCollection implements Serializable, Runnable, Comparable<Object> {
 	public static final String TICKER_SYMBOL_COL = "ticker_symbol";
-	@Id 
-	@SequenceGenerator(name="identifier", sequenceName="securities_id_seq",allocationSize=1) 
-	@GeneratedValue(strategy=GenerationType.SEQUENCE,	generator="identifier")
-	@Column(name = "id")
 	private int id ;
-	@Column(name = TICKER_SYMBOL_COL)//, unique = true, index = true)
 	private String tickerSymbol;
-	@Column(name = "company_name", nullable = true)
 	private String instrumentName;	
-	@Column(name = "beta_value", nullable = true)
 	private Double betaValue=1.0d;
-	@Column(name = "selected")
-	@Transient
 	private boolean selectedInstrument, isSplit;
-	@Transient
 	private Double meanPrice, stdDevPrice, variancePrice, lastClosePrice;
-	@Transient
 	private Double corralationToInitPortfolio;
-	@Transient
 	private int position;
-	@Transient
 	private CandleSticks cs;
-	@Transient
 	private CandleStick OldestCandleStickSaved, NewestCandleStickSaved;
-	@Transient
 	private MoneyMgmtStrategy mms, mmsTemp;
-	@Transient
 	private ArrayList<MoneyMgmtStrategy> mmsSet = new ArrayList<MoneyMgmtStrategy> ();
-
-	@Transient
 	private boolean selectedTrade;
-	@Transient
 	private Legs Legs;
-	@Transient
 	private int portfolioID = 1;
-	@Transient
-	private Portfolio belongsTo;
-	@Transient
+	private PortfolioGroup belongsTo;
 	private int executionLevel;
-	@Transient
 	private static String dbURL = "jdbc:derby:C:\\Users\\Phil\\MyDB;create=true;user=test;password=test";
-	@Transient
     private static Connection conn = null;    
-	@Transient
-    private Set<Portfolio> portfolios = new HashSet<Portfolio>();
+
 	
     public SecurityInst() {}
 
@@ -318,7 +291,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 				long volume = resultSet.getInt( 7 );
 				double adjClose = resultSet.getInt( 6 );
 				CandleStick c = new CandleStick(date, open, close, high, low, adjClose, (int) volume, cs) ;
-				cs.candleSticks.add(c) ;
+				cs.getCandleSticks().add(c) ;
 				return true;                  
 			} // end if
 			return false;
@@ -382,7 +355,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		CandleStick c;
 
 		try {
-			Iterator<CandleStick> i = cs.candleSticks.iterator();
+			Iterator<CandleStick> i = cs.getCandleSticks().iterator();
 			while (i.hasNext()) {    
 				c = i.next();
 				c.SaveHistory(this.getPrimaryKeyThisTicker());
@@ -435,6 +408,14 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 			return null;
 		} // end catch            
 	} // end getPrimaryKeyThisTicker
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
 
 	public String setUpSecurity(String pkey) {
 		Connection conn = null;
@@ -533,12 +514,11 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 	}
 
 	public void setCandleSticks(ArrayList<CandleStick> candleSticks) {
-		this.cs.candleSticks = candleSticks;
+		this.cs.setCandleSticks(candleSticks);
 	}
 
-
 	public String getinstrumentName() {
-		return instrumentName;
+		return this.instrumentName;
 	}
 
 	public void setinstrumentName(String instrumentName) {
@@ -687,7 +667,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		while(true) {
 			Integer x = 0,y=100;
 			try {
-				if((++x>y) && (cs.candleSticks.isEmpty())) 
+				if((++x>y) && (cs.getCandleSticks().isEmpty())) 
 					throw new Exception(String.format("Failed after %f attempts for %s to load beta data.", y.toString(), this.getTickerSymbol()));
 				//System.out.println(this.getinstrumentName()+"("+this.getTickerSymbol() +"):  " + df2.format(startDate)+" to "+df2.format(endDate));
 				//System.out.printf("Beta = %f\n",this.getBetaValue());
@@ -735,7 +715,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 					c.setPriorCandle(lastCS);
 					if(lastCS!=null)
 						c.getPriorCandle().setNextCandle(c);
-					cs.candleSticks.add(c);	
+					cs.getCandleSticks().add(c);	
 					this.getBelongsToPortfolios().getHistoricalPricesTable().saveCandleStickPriceData(c);
 					lastCS = c;
 					//if the current and last price a extremely different, assume this is an outlyer and throw out
@@ -770,7 +750,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 	}
 
 	private boolean dateAlreadyLoaded(Date date) {
-		Iterator<CandleStick> i = cs.candleSticks.iterator();
+		Iterator<CandleStick> i = cs.getCandleSticks().iterator();
 		while (i.hasNext()) {    
 			if(i.next().getDate().equals(date)) return true;
 		}//while
@@ -808,7 +788,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 
 	}
 	
-	public Portfolios getBelongsToPortfolios() {
+	public PortfoliosGroup getBelongsToPortfolios() {
 		return this.getBelongsTo().getBelongsTo();
 	}
 	
@@ -948,11 +928,11 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		this.mmsSet = mmsSet;
 	}
 
-	public Portfolio getBelongsTo() {
+	public PortfolioGroup getBelongsTo() {
 		return belongsTo;
 	}
 
-	public void setBelongsTo(Portfolio belongsTo) {
+	public void setBelongsTo(PortfolioGroup belongsTo) {
 		this.belongsTo = belongsTo;
 	}
 
@@ -1012,10 +992,7 @@ public class SecurityInst extends PriceCollection implements Serializable, Runna
 		selectedInstrument = selected;
 	}
 
-    public void addGroup(Portfolio portfolio) {
-        this.portfolios.add(portfolio);
-    }
-	
+
 	public static void main(String[] args) throws InterruptedException {
 
 		/*"AXP", "BA", "CAT", "CSCO", "CVX", "DD", "DIS", "GE", "GS", "HD", "IBM", "INTC", "JNJ", "JPM",

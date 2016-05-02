@@ -28,13 +28,13 @@ public  class DataLoader implements GlobalVars {
 	private ArrayList<Double> stops;
 	private ArrayList<Double> stopTriggers;
 	private ArrayList<String> instrumentNames;
-	private Portfolio belongsTo;
+	private PortfolioGroup belongsTo;
 	
     public DataLoader() { super(); }
     
-    public DataLoader(String filename, Portfolio belongsTo) {
+    public DataLoader(String filename, PortfolioGroup portfolioGroup) {
 		super();
-		this.setBelongsTo(belongsTo);
+		this.setBelongsTo(portfolioGroup);
 		try {
 			this.loadTradeHistoryTable();
 		} catch (FileNotFoundException e) {
@@ -238,15 +238,15 @@ public  class DataLoader implements GlobalVars {
 		this.mms = mms;
 	}
 
-	public Portfolio getBelongsTo() {
+	public PortfolioGroup getBelongsTo() {
 		return belongsTo;
 	}
 
-	public void setBelongsTo(Portfolio belongsTo) {
+	public void setBelongsTo(PortfolioGroup belongsTo) {
 		this.belongsTo = belongsTo;
 	}
 
-    private Portfolios getBelongsToPortfolios() {
+    private PortfoliosGroup getBelongsToPortfolios() {
     	return this.getBelongsTo().getBelongsTo();		
 	}
 	

@@ -13,37 +13,53 @@ import java.sql.SQLException;
 import java.util.Iterator;
 
 import javax.annotation.Resource;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.sql.DataSource;
 
 import org.joda.time.DateTime;
 
 import com.utilities.GlobalVars;
-
+import com.workers.SecurityInst;
 import com.workers.Tools;
+@Entity
+@Table(name = "historical_prices")
+public  class CandleStick extends EntityBean  implements IEntityBean, GlobalVars, Serializable {
+	@Id 
+	@SequenceGenerator(name="identifier", sequenceName="trade_history_id_seq",allocationSize=1) 
+	@GeneratedValue(strategy=GenerationType.SEQUENCE,	generator="identifier")
+	@Column(name = "id") private int id ;
+	@Column(name = "ticker_symbol") private String tickerSymbol;
+	@Column(name = "tradedate") private Date date;
+	@Column(name = "openprice") private double openPrice;
+	@Column(name = "closeprice") private double closePrice;
+	@Column(name = "highprice") private double highPrice;
+	@Column(name = "lowprice") private double lowPrice;
+	@Column(name = "ticker_symbol") private double stopPrice;//used to keep filled price when this cs goes through a stop
+	@Column(name = "adjclose") private double adjustedClosePrice;
+	@Column(name = "volume") private Integer volume;
+	@Column(name = "selected") private  boolean selected;
+	@Transient private barSize timeUnit;
+	@Transient private typePattern candleStickType;  //hangman, doji, etc
+	@Transient private Boolean swingPoint;
+	@Transient private CandleSticks belongsTo;
+	@Transient private CandleStick priorCandle;
+	@Transient private CandleStick nextCandle;
+	@Transient private CandleStick sectorCandle;
+	@Transient private CandleStick majorIndexCandle;
+	@Resource( name="jdbc/ADDRESSES" ) DataSource dataSource;
+	@ManyToOne(cascade = CascadeType.ALL) @JoinColumn(name = "candle_sticks_id") private CandleSticks candleSticks;
 
-public  class CandleStick implements GlobalVars, Serializable {
-	
-	private String tickerSymbol;
-	Date date;
-	double openPrice;
-	double closePrice;
-	double highPrice;
-	double lowPrice;
-	double stopPrice;//used to keep filled price when this cs goes through a stop
-	double adjustedClosePrice;
-	Integer volume;
-	private boolean selected;
-	barSize timeUnit;
-	typePattern candleStickType;  //hangman, doji, etc
-	Boolean swingPoint;
-	CandleSticks belongsTo;
-	CandleStick priorCandle;
-	CandleStick nextCandle;
-	CandleStick sectorCandle;
-	CandleStick majorIndexCandle;
-        @Resource( name="jdbc/ADDRESSES" )
-        DataSource dataSource;
-        	
 	public CandleStick(Date date, double openPrice, double closePrice,
 			double highPrice, double lowPrice, double adjustedClosePrice,
 			int volume, CandleSticks cs) {

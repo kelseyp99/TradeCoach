@@ -5,6 +5,7 @@
 package com.tradecoach.patenter.entity.security;
 
 import com.workers.DAO;
+import com.workers.SecurityInst;
 import com.utilities.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

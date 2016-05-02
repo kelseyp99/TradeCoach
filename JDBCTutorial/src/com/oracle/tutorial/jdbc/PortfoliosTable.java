@@ -24,10 +24,11 @@ import org.hibernate.cfg.AnnotationConfiguration;
 import com.gui.CheckBoxHeader;
 import com.gui.GUI;
 import com.tradecoach.patenter.entity.security.CandleSticks;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.MoneyMgmtStrategy;
-import com.workers.Portfolio;
-import com.workers.Portfolios;
+import com.workers.PortfolioGroup;
+import com.workers.PortfolioGroup;
+import com.workers.PortfoliosGroup;
+import com.workers.SecurityInst;
 
 public class PortfoliosTable  extends Tables {
 	   private static SessionFactory factory; 
@@ -55,7 +56,7 @@ public class PortfoliosTable  extends Tables {
 		     // Integer portfolioID = null;
 		      try{
 		         tx = session.beginTransaction();
-		         Portfolio portfolio = new Portfolio();
+		         PortfolioGroup portfolio = new PortfolioGroup();
 		         portfolio.setPortfolioName(portfolioName);
 		         portfolioName = (String) session.save(portfolio); 
 		         tx.commit();
@@ -69,7 +70,7 @@ public class PortfoliosTable  extends Tables {
 		   }
 
 	public PortfoliosTable() {}
-	public PortfoliosTable(Connection connArg, String dbNameArg, String dbmsArg, Portfolios belongsTo) {
+	public PortfoliosTable(Connection connArg, String dbNameArg, String dbmsArg, PortfoliosGroup belongsTo) {
 		super(connArg, dbNameArg, dbmsArg, belongsTo, "PORTFOLIOS");
 		this.setDdlCreate(new String[] {"CREATE TABLE APP.PORTFOLIOS ( " +
 				"PORTFOLIO_NAME VARCHAR(20) NOT NULL, "+
@@ -77,6 +78,11 @@ public class PortfoliosTable  extends Tables {
 		") "});
 		this.setDmlPopulate("insert into APP.PORTFOLIOS (PORTFOLIOS.PORTFOLIO_NAME) values ('DEFAULT_PORTFOLIO')");
 		this.initialize();
+	}
+
+	public PortfoliosTable(PortfoliosGroup belongsTo) {
+	  super(belongsTo, "PORTFOLIOS");
+	  this.initialize();
 	}
 
 	public void initialize(){
@@ -87,7 +93,7 @@ public class PortfoliosTable  extends Tables {
 		return this.getBelongsTo().getHistoricalPricesTable();		  
 	}
 
-	public void savePortfolioInfo(Portfolio p) {
+	public void savePortfolioInfo(PortfolioGroup p) {
 		PreparedStatement stmt = null;
 		try {
 			stmt = con.prepareStatement(
@@ -105,7 +111,7 @@ public class PortfoliosTable  extends Tables {
 		}
 	}
 
-	public void deletePortfolioInfo(Portfolio p, JFrame frame) {
+	public void deletePortfolioInfo(PortfolioGroup p, JFrame frame) {
 		PreparedStatement stmt = null;
 		if(JOptionPane.showConfirmDialog(
 				frame,

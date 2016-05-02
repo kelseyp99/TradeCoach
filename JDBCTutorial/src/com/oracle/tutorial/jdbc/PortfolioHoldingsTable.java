@@ -18,14 +18,14 @@ import javax.swing.table.TableColumn;
 import com.gui.CheckBoxHeader;
 import com.gui.GUI;
 import com.tradecoach.patenter.entity.security.CandleSticks;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.workers.MoneyMgmtStrategy;
 import com.workers.Portfolio;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
+import com.workers.SecurityInst;
 
 	public class PortfolioHoldingsTable  extends Tables {
 		
-	  public PortfolioHoldingsTable(Connection connArg, String dbNameArg, String dbmsArg, Portfolios belongsTo) {
+	  public PortfolioHoldingsTable(Connection connArg, String dbNameArg, String dbmsArg, PortfoliosGroup belongsTo) {
 		    super(connArg, dbNameArg, dbmsArg, belongsTo, "PORTFOLIO_HOLDINGS");
 //		    this.setDdlCreate("CREATE TABLE APP.PORTFOLIO_HOLDINGS (	 "+
 //		    		"PORTFOLIO_NAME VARCHAR(20) NOT NULL, " +
@@ -56,6 +56,11 @@ import com.workers.Portfolios;
 		    this.initialize();
 	}
 	  
+	public PortfolioHoldingsTable(PortfoliosGroup belongsTo) {
+	  super(belongsTo, "PORTFOLIO_HOLDINGS");
+	  this.initialize();
+	}
+
 		public void initialize(){
 		//	super.initialize(this.getDdlCreate());
 			super.initialize();

@@ -52,9 +52,9 @@ import org.hibernate.Transaction;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-import com.tradecoach.patenter.db.DBHelperDataImport;
+import com.tradecoach.patenter.db.HibernateUtils;
 import com.tradecoach.patenter.entity.security.CandleStick;
-import com.tradecoach.patenter.entity.security.SecurityInst;
+import com.tradecoach.patenter.entity.security.Portfolio;
 import com.tradecoach.patenter.entity.security.StopTestStats;
 import com.tradecoach.patenter.processor.PatentParsingProcessor;
 import com.gui.GUI;
@@ -62,15 +62,8 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-@Entity}
-@Table(name = "portfolio_name")
-public  class Portfolio extends PriceCollection implements Serializable {
-	@Id 
-	@SequenceGenerator(name="identifier", sequenceName="portfolio_id_seq",allocationSize=1) 
-	@GeneratedValue(strategy=GenerationType.SEQUENCE,	generator="identifier")
-	@Column(name = "id")
-	private int id ;
-	@Column(name = "portfolio_name")//, unique = true, index = true)
+
+public  class PortfolioGroup extends PriceCollection implements Serializable {
 	private String portfolioName;
 	private boolean runCurrent = true;
 	private static final int NTHREDS = 10;
@@ -79,13 +72,14 @@ public  class Portfolio extends PriceCollection implements Serializable {
 	public Map<typeVaR,Double> aVaRs;
 	private double corralation2initPortfolio, meanPL, varianceCoVariance;
 	private int securityCount;
-	private Portfolios belongsTo;
+	private PortfoliosGroup belongsTo;
+	private Portfolio PortfolioEntity;
 	private MoneyMgmtStrategy mms2bRun;
 	private DataLoader dl;
 	private boolean alreadyRanMyResults=false; 
     private Set<SecurityInst> securityInsts = new HashSet<SecurityInst>();
     private Config config;
-    private DBHelperDataImport dbHelper;
+    private HibernateUtils dbHelper;
     private Queue<SecurityInst> pairDownloadingQueue = new ArrayBlockingQueue<>(10000);
     private Queue<SecurityInst> pairParsingQueue = new ArrayBlockingQueue<>(10000);
     private Queue<String> prefixesQueue;
@@ -94,13 +88,13 @@ public  class Portfolio extends PriceCollection implements Serializable {
     private ReportPrinter reportPrinter;
 	private PatentParsingProcessor patentParsingProcessor;
 	private boolean isStarted;
-    private static final Logger logger = LoggerFactory.getLogger(Portfolios.class);
+    private static final Logger logger = LoggerFactory.getLogger(PortfoliosGroup.class);
 	
-	public Portfolio(String fname) {
+	public PortfolioGroup(String fname) {
 		 this.setPortfolioName(fname);
 		   }
 	
-	public Portfolio(MarketCalendar mc, String filename) {
+	public PortfolioGroup(MarketCalendar mc, String filename) {
 		super(mc);
 		DataLoader dl = new DataLoader(filename, this);
 		List<String> list = dl.getList();
@@ -113,7 +107,7 @@ public  class Portfolio extends PriceCollection implements Serializable {
         this.setSecurityCount(this.getHoldingSet().size());
 	} //Portfolio
 
-	public Portfolio(String filename, Portfolios parent) {
+	public PortfolioGroup(String filename, PortfoliosGroup parent) {
 		super();
 		this.setBelongsTo(parent);//set which Portfolios object this Portfolio belongs too
 		this.setRunCurrent(this.getBelongsTo().isRunCurrent());
@@ -127,7 +121,7 @@ public  class Portfolio extends PriceCollection implements Serializable {
         this.setSecurityCount(this.getHoldingSet().size());
 	} //Portfolio
 
-	public Portfolio(MarketCalendar mc, List<String> list, List<Integer> positions) {
+	public PortfolioGroup(MarketCalendar mc, List<String> list, List<Integer> positions) {
 		super(mc);
 		/*
 		 * This constructor adds each security name to the portfolio
@@ -139,7 +133,7 @@ public  class Portfolio extends PriceCollection implements Serializable {
         this.setSecurityCount(this.getHoldingSet().size());
 	} //Portfolio(List list)
 	
-	public Portfolio(Portfolio p) {
+	public PortfolioGroup(PortfolioGroup p) {
 		//super(new MarketCalendar(p.getStartDate(), p.getEndDate()));
 		this.setHoldingSet(p.getHoldingSet());
 		this.setBelongsTo(p.getBelongsTo());
@@ -149,7 +143,7 @@ public  class Portfolio extends PriceCollection implements Serializable {
 	}//Portfolio
 	
 	@SuppressWarnings("null")
-	public Portfolio(MarketCalendar mc, List<String> list) {
+	public PortfolioGroup(MarketCalendar mc, List<String> list) {
 		super(mc);
 		//create a portfolio with all initial holding amounts set to zero
 		ArrayList<Integer> positions = new ArrayList<Integer>(Collections.nCopies(list.size(), 0));
@@ -162,7 +156,7 @@ public  class Portfolio extends PriceCollection implements Serializable {
 	}//Portfolio
 
 	@SuppressWarnings("null")
-	public Portfolio(MarketCalendar mc, List<MoneyMgmtStrategy> list, int x) {
+	public PortfolioGroup(MarketCalendar mc, List<MoneyMgmtStrategy> list, int x) {
 		super(mc);
 		//create a portfolio with all initial holding amounts set to zero
 		ArrayList<Integer> positions = new ArrayList<Integer>(Collections.nCopies(list.size(), 0));
@@ -175,31 +169,28 @@ public  class Portfolio extends PriceCollection implements Serializable {
 	}//Portfolio
 
 	
-	public Portfolio() {
+	public PortfolioGroup() {
 	}
 	
-	 public Portfolio(Config config) {
-	        this.config = config;
+	 public PortfolioGroup(Config config) {		 
+	     this.setConfig(config);
 	        //Create Redisson object
 	     //   org.redisson.Config redisConfig = new org.redisson.Config();
 	     //   redisConfig.useSingleServer()
 	     //           .setAddress(config.getString("redis_url"));
 
 	     //   redisson = Redisson.create(redisConfig);
-	        setDbQueue(redisson.getQueue(this.config.getConfig("dbSerializer").getString("redis_queue_name")));
+	        setDbQueue(new ArrayBlockingQueue<>(10000));
 	       // logger.info("DB queue size:", dbQueue.size());
 	    }
 
-	    public Portfolio withDBModule() throws SQLException {
-
-	       	this.setDbHelper(new DBHelperDataImport(getDbQueue(), config.getConfig("dbSerializer")));
-	       //this.dbHelper = new DBHelperDataImport(getDbQueue(), config.getConfig("dbSerializer"));
-	        
+	    public PortfolioGroup withDBModule() throws SQLException {
+	       	this.setDbHelper(new HibernateUtils(getDbQueue(), this.getConfig().getConfig("dbSerializer")));
 	        return this;
 	    }
 
-	    public Portfolio withProcessing() throws ParserConfigurationException {
-	    		prefixesQueue = com.tradecoach.patenter.parsers.utils.UtilTools.getXMLFileNames();
+	    public PortfolioGroup withProcessing() throws ParserConfigurationException {
+	    		//prefixesQueue = com.tradecoach.patenter.parsers.utils.UtilTools.getXMLFileNames();
 	    
 	    	patentParsingProcessor = new PatentParsingProcessor(
 	    			prefixesQueue,
@@ -525,7 +516,7 @@ public  class Portfolio extends PriceCollection implements Serializable {
         }  
 	}
 	
-	public void corralateToOtherPortfolio(Portfolio otherPortfolio) {
+	public void corralateToOtherPortfolio(PortfolioGroup otherPortfolio) {
 	//	PearsonsCorrelation pc = new PearsonsCorrelation();
 		double x;
 		double[] b;
@@ -841,6 +832,14 @@ public  class Portfolio extends PriceCollection implements Serializable {
 		this.portfolioName = portfolioName;
 	}
 		
+	public Portfolio getPortfolioEntity() {
+		return PortfolioEntity;
+	}
+
+	public void setPortfolioEntity(Portfolio portfolioEntity) {
+		PortfolioEntity = portfolioEntity;
+	}
+
 	/**
 	 * Loop through the <b>mms</b> of each <b>Security</b> instance in the holdingSet and obtain
 	 * the statistics related to its stop.  Add these statistics to the <b>StopTestStats</b> of this
@@ -871,13 +870,13 @@ public  class Portfolio extends PriceCollection implements Serializable {
 		this.securityCount = securityCount;
 	}
 
-	public Portfolios getBelongsTo() {
+	public PortfoliosGroup getBelongsTo() {
 		return belongsTo;
 	}
 	
 		
 	/**set which <b>Portfolios</b> object this <b>Portfolio</b> ojbect belongs too*/
-	public void setBelongsTo(Portfolios belongsTo) {
+	public void setBelongsTo(PortfoliosGroup belongsTo) {
 		this.belongsTo = belongsTo;
 	}
 	
@@ -913,11 +912,11 @@ public  class Portfolio extends PriceCollection implements Serializable {
 		this.alreadyRanMyResults = alreadyRanMyResults;
 	}
 
-	public DBHelperDataImport getDbHelper() {
+	public HibernateUtils getDbHelper() {
 		return dbHelper;
 	}
 
-	public void setDbHelper(DBHelperDataImport dbHelper) {
+	public void setDbHelper(HibernateUtils dbHelper) {
 		this.dbHelper = dbHelper;
 	}
 
@@ -927,6 +926,14 @@ public  class Portfolio extends PriceCollection implements Serializable {
 
 	public void setDbQueue(Queue<SecurityInst> dbQueue) {
 		this.dbQueue = dbQueue;
+	}
+
+	public Config getConfig() {
+		return config;
+	}
+
+	public void setConfig(Config config) {
+		this.config = config;
 	}
 
 	public static void main(String[] args) throws InterruptedException {
@@ -957,7 +964,7 @@ public  class Portfolio extends PriceCollection implements Serializable {
 	//		mms.add(new MoneyMgmtStrategy(tickers.get(i), instrumentNames.get(i), orderDates.get(i), positions.get(i), entryPrices.get(i), stopLosses.get(i), stops.get(i), null));
 		}
 		//Portfolio p = new Portfolio(mc, tickers, positions);
-		Portfolio p = new Portfolio(mc, mms, 0);
+		PortfolioGroup p = new PortfolioGroup(mc, mms, 0);
 		p.loadHistoricalPriceData();
 		p.executeOrders();
 		p.RunStats();

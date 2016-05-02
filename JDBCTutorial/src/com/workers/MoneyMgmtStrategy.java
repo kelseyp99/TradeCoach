@@ -19,13 +19,12 @@ import com.gui.GUI;
 import com.tradecoach.patenter.entity.security.CandleStick;
 import com.tradecoach.patenter.entity.security.FOrder;
 import com.tradecoach.patenter.entity.security.Order;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.tradecoach.patenter.entity.security.SimpleExit;
 import com.tradecoach.patenter.entity.security.StopTestStats;
 import com.utilities.GlobalVars;
 
 import com.utilities.GlobalVars.*;
-import com.workers.Portfolios.Pcts4Lyer;
+import com.workers.PortfoliosGroup.Pcts4Lyer;
 
 public class MoneyMgmtStrategy implements GlobalVars {
 	private String tickerSymbol, tradeActivity="";
@@ -794,7 +793,7 @@ public class MoneyMgmtStrategy implements GlobalVars {
 		return this.getBelongsToPortfolios().getBelongsToGUI();
 	}
 
-	private Portfolios getBelongsToPortfolios() {
+	private PortfoliosGroup getBelongsToPortfolios() {
 		// TODO Auto-generated method stub
 		return this.getBelongsToPortfolio().getBelongsTo();
 	}
@@ -1031,7 +1030,7 @@ public class MoneyMgmtStrategy implements GlobalVars {
 		this.cout(null);
 	}
 	
-	private Portfolios.Lock getLock() {
+	private PortfoliosGroup.Lock getLock() {
 		try {
 			return this.getBelongsToPortfolios().getCoutLock();
 		} catch (NullPointerException e) {

@@ -10,8 +10,8 @@ import com.datanovo.patenter.parsers.ParserFactory;
 import com.datanovo.patenter.parsers.PatentParser;
 import com.github.rholder.retry.RetryException;
 import com.google.common.base.Stopwatch;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.typesafe.config.Config;
+import com.workers.SecurityInst;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,14 +62,14 @@ public class PatentParsingProcessor extends AbstractQueueProcessor<String, Secur
     }
 
     @Override
-    public Patent execute(String xmlFileName) throws Exception {
+    public SecurityInst execute(String xmlFileName) throws Exception {
     	//Check amount of free disk space
     	while (((float) root.getFreeSpace() / root.getTotalSpace()) < 0.05) {
     		logger.warn("Free disk space < 5%. Sleeping");
     		Thread.sleep(1000);
     	}
     	File xmlFile = this.downloadDocument(xmlFileName);
-    	Patent patent = this.parseFile(xmlFile);
+    	SecurityInst si = this.parseFile(xmlFile);
     	if(xmlFileName.contains("/"))
     		patent.setDocumentS3Key(xmlFileName.substring(0, xmlFileName.lastIndexOf("/") + 1) );
     	else

@@ -8,9 +8,10 @@ import com.google.gson.GsonBuilder;
 import com.tradecoach.patenter.entity.security.EntityBean;
 import com.tradecoach.patenter.entity.security.Parameter;
 import com.tradecoach.patenter.entity.security.PortfolioHoldings;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.typesafe.config.Config;
-import com.workers.Portfolio;
+import com.workers.SecurityInst;
+import com.workers.TransactionData;
+import  com.tradecoach.patenter.entity.security.*;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -43,9 +44,9 @@ import java.util.stream.Collectors;
 /**
  * Created by Alexander Loginov on 1/28/15.
  */
-public class DBHelperDataImport {
+public class HibernateUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(DBHelperDataImport.class);
+    private static final Logger logger = LoggerFactory.getLogger(HibernateUtils.class);
 	private SessionFactory sessionFactory;
 	private static ServiceRegistry serviceRegistry;     
     private static Properties prop;
@@ -82,7 +83,7 @@ public class DBHelperDataImport {
     private final ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
     protected Queue<SecurityInst> patentsQueue;
     
-    public DBHelperDataImport() {
+    public HibernateUtils() {
 		super();
 		this.patentsQueue = null;
 		FLUSH_BARRIER = 0;
@@ -90,7 +91,7 @@ public class DBHelperDataImport {
         BATCH_SIZE = 0;
 	}
 
-	public DBHelperDataImport(Queue<SecurityInst> inputQueue, Config config) throws SQLException {
+	public HibernateUtils(Queue<SecurityInst> inputQueue, Config config) throws SQLException {
 		this.patentsQueue = inputQueue;
 		FLUSH_BARRIER = config.getInt("flush_barrier");
 		FORCED_FLUSHING_PERIOD = config.getInt("forced_flushing_period");
@@ -143,51 +144,6 @@ public class DBHelperDataImport {
 		logger.debug("Populated from cache in {} ms", cacheStopWatch.stop().elapsed(TimeUnit.MILLISECONDS));
 		this.updateOrSave(securityInsts);
 	}  	
-   
-    /**
-     * Takes Patent as parameter and try to get ID for Assignee, Inventors, Primary and Assistant Examiners from DBCache
-     *
-     * @param si
-     */
-    private void populateRelationsFromCache(SecurityInst si) {
-        if (si.getAssignee() != null && cache.getAssigneeCache().find(si.getAssignee()) != null)
-            si.getAssignee().setId(cache.getAssigneeCache().find(si.getAssignee()));
-        if (si.getAssistantExaminer() != null && cache.getExaminerCache().find(si.getAssistantExaminer()) != null)
-            si.getAssistantExaminer().setId(cache.getExaminerCache().find(si.getAssistantExaminer()));
-        if (cache.getExaminerCache().find(si.getPrimaryExaminer()) != null)
-            si.getPrimaryExaminer().setId(cache.getExaminerCache().find(si.getPrimaryExaminer()));
-
-        si.getInventors().stream().forEach(i -> {
-            i.setId(cache.getInventorCache().find(i));
-        });
-    }
-
-    /**
-     * Takes Patent as parameter and try to get ID for Assignee, Inventors, Primary and Assistant Examiners from transactional cache
-     *
-     * @param patent
-     */
-    private void populateRelationsFromTransactionalCache(Cache transCache, Patent patent) {
-        Assignee a = patent.getAssignee();
-        Examiner pe = patent.getPrimaryExaminer();
-        Examiner ae = patent.getAssistantExaminer();
-
-        if (pe != null && pe.getId() == null && transCache.getExaminerCache().find(pe) != null) {
-            pe.setId(transCache.getExaminerCache().find(pe));
-        }
-        if (ae != null && ae.getId() == null && transCache.getExaminerCache().find(ae) != null) {
-            ae.setId(transCache.getExaminerCache().find(ae));
-        }
-        if (a != null && a.getId() == null && transCache.getAssigneeCache().find(a) != null) {
-            a.setId(transCache.getAssigneeCache().find(a));
-        }
-        if (patent.getInventors() != null) {
-            patent.getInventors().stream().filter(i -> i.getId() == null).forEach(i -> {
-                i.setId(transCache.getInventorCache().find(i));
-            });
-        }
-    }
-
 
 	public void updateOrSave(SecurityInst si) { 
 		Session session = this.getSessionFactory().getCurrentSession();
@@ -198,13 +154,13 @@ public class DBHelperDataImport {
 //		si.setPartOf(si);
 //		si.getReferences().forEach(reference->reference.setPartOf(patent));    	
 //		si.getInventors().forEach(inventor->setID(inventor));     	
-		setID(si);
-		setID(si.getAssistantExaminer());
-		setID(si.getAssignee());
-		setID(si);
-		si.getReferences().forEach(reference->setID(reference));
+//		setID(si);
+//		setID(si.getBelongsTo());
+//		setID(si.getAssignee());
+//		setID(si);
+//		si.getReferences().forEach(reference->setID(reference));
 		session.saveOrUpdate(si); 
-		si.getReferences().forEach(reference->session.saveOrUpdate(reference));	
+//		si.getReferences().forEach(reference->session.saveOrUpdate(reference));	
 	}
 
 	private  void updateOrSave(List<SecurityInst> sis) {
@@ -240,11 +196,24 @@ public class DBHelperDataImport {
             prop.put("hibernate.current_session_context_class", "thread");
 			Configuration configuration = new Configuration();
 		//	configuration.setProperties(prop);
+//			configuration.addPackage("com.tradecoach.patenter.entity.security");//the fully qualified package name
+//			configuration.addAnnotatedClass(Securities.class);
+////			configuration.addAnnotatedClass(Portfolio.class);
+//			configuration.addAnnotatedClass(Parameter.class);
+//			configuration.addAnnotatedClass(PortfolioHoldings.class);
+//			configuration.addAnnotatedClass(TransactionData.class);
 			configuration.configure();
-			configuration.addAnnotatedClass(SecurityInst.class);
-			configuration.addAnnotatedClass(Portfolio.class);
-			configuration.addAnnotatedClass(Parameter.class);
-			configuration.addAnnotatedClass(PortfolioHoldings.class);
+	/*		
+			sessionFactory = new AnnotationConfiguration()
+                    .addPackage("test.animals") //the fully qualified package name
+                    .addAnnotatedClass(Flight.class)
+                    .addAnnotatedClass(Sky.class)
+                    .addAnnotatedClass(Person.class)
+                    .addAnnotatedClass(Dog.class)
+                    .addResource("test/animals/orm.xml")
+                    .configure()
+                    .buildSessionFactory();*/
+			
 			serviceRegistry = new StandardServiceRegistryBuilder().applySettings(
 					configuration.getProperties()).build();  
 
@@ -255,73 +224,38 @@ public class DBHelperDataImport {
 		}
 	}
 
-	public static void setID( EntityBean entityBean) {
+	public void setID( EntityBean entityBean) {
 		if(entityBean==null) return;
 		int id = 0;
 		PreparedStatement pst;
 		Session session = this.getSessionFactory().openSession();
 		Connection con = ((SessionImplementor) session).connection();		
 		try {
-			if(entityBean.getClassTypeStr().compareTo("Examiner")==0) {
-				Examiner bean = (Examiner)entityBean;
-				String sql = 	"select id from Examiners_1 " +
+		//	if(entityBean.getClassTypeStr().compareTo("Examiner")==0) {
+			if(entityBean.getClassType()==SecurityInst.class) {
+				SecurityInst bean = (SecurityInst)entityBean;
+				String sql = 	"select id from SECURITIES " +
+						"where ticker_symbol = ? " +
+						"order by id desc limit 1";
+				pst = con.prepareStatement(sql);
+				pst.setString(1, bean.getTickerSymbol());
+				ResultSet rs = pst.executeQuery();
+				if (rs != null && rs.next()) {
+					bean.setId(rs.getInt("id"));
+				} 
+			} else if(entityBean.getClassType()==Portfolio.class) {
+				Portfolio bean = (Portfolio)entityBean;
+				String sql = 	"select id from Portfolios " +
 						"where first_name = ? " +
 						"and last_name = ? " +
 						"order by id desc limit 1";
 				pst = con.prepareStatement(sql);
-				pst.setString(1, bean.getFirstName());
-				pst.setString(2, bean.getLastName());
+				//pst.setString(1, bean.getPortfolioName());
 				ResultSet rs = pst.executeQuery();
 				if (rs != null && rs.next()) {
-					bean.setId(rs.getInt("id"));
+				//	bean.setId(rs.getInt("id"));
 				} 
-			} else if(entityBean.getClassTypeStr().compareTo("Inventor")==0) {
-				Inventor bean = (Inventor)entityBean;
-				String sql = 	"select id from Inventors_1 " +
-						"where first_name = ? " +
-						"and last_name = ? " +
-						"order by id desc limit 1";
-				pst = con.prepareStatement(sql);
-				pst.setString(1, bean.getFirstName());
-				pst.setString(2, bean.getLastName());
-				ResultSet rs = pst.executeQuery();
-				if (rs != null && rs.next()) {
-					bean.setId(rs.getInt("id"));
-				} 
-			}else if(entityBean.getClassTypeStr().compareTo("Assignee")==0) {
-				Assignee bean = (Assignee)entityBean;
-				String sql = 	"select id from Assignees_1 " +
-						"where name = ? " +
-						"order by id desc limit 1";
-				pst = con.prepareStatement(sql);
-				pst.setString(1, bean.getName());
-				ResultSet rs = pst.executeQuery();
-				if (rs != null && rs.next()) {
-					bean.setId(rs.getInt("id"));
-				} 
-			}else if(entityBean.getClassTypeStr().compareTo("Patent")==0) {
-				Patent bean = (Patent)entityBean;
-				String sql = 	"select id from Patents_1 " +
-						"where patent_number = ? " +
-						"order by id desc limit 1";
-				pst = con.prepareStatement(sql);
-				pst.setString(1, bean.getPatentNumber());
-				ResultSet rs = pst.executeQuery();
-				if (rs != null && rs.next()) {
-					bean.setId(rs.getInt("id"));
-				} 
-			}else if(entityBean.getClassTypeStr().compareTo("Reference")==0) {
-				Reference bean = (Reference)entityBean;
-				String sql = 	"select id from patent_references_1 " +
-						"where reference_to_number = ? " +
-						"order by id desc limit 1";
-				pst = con.prepareStatement(sql);
-				pst.setLong(1, bean.getPatents().getId());
-				ResultSet rs = pst.executeQuery();
-				if (rs != null && rs.next()) {
-					bean.setId(rs.getInt("id"));
-				} 
-			}
+			}	
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

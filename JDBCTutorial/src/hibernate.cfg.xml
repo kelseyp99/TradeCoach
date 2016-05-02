@@ -7,22 +7,22 @@
     <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
     <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
     <property name="hibernate.connection.url">jdbc:postgresql://localhost:5444/testdb</property> 
-    <!--    <property name="hibernate.connection.username">enterprisedb</property>   
-  <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+      <property name="hibernate.connection.username">enterprisedb</property>   
+  <!--  <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
    <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
-   <property name="hibernate.connection.url">jdbc:mysql://localhost/testdb</property>--> 
-   <property name="hibernate.connection.username">root</property>
+   <property name="hibernate.connection.url">jdbc:mysql://localhost/testdb</property>
+   <property name="hibernate.connection.username">root</property>--> 
    <property name="hibernate.connection.password">4030</property>
    <property name="hibernate.connection.autocommit">true</property>
    <property name="show_sql">true</property>
    <property name="format_sql">true</property><property name=""></property>
    <property name="use_sql_comments ">true</property>
-   <!-- List of XML mapping files -->
- <!--  <mapping resource="Parameter.hbm.xml"/>
-    <mapping resource="SecurityInst.hbm.xml"/>
-   <mapping resource="Portfolio.hbm.xml"/>  --> 
- <!--    <mapping resource="TransactionData.hbm.xml"/>
-   <mapping resource="CandleStick.hbm.xml"/> -->
-   <!-- <mapping resource="PortfolioHoldings.hbm.xml"/>  -->
+   <property name="hibernate.hbm2ddl.auto">update</property>
+    <mapping class="com.tradecoach.patenter.entity.security.Securities"/>  
+    <mapping class="com.tradecoach.patenter.entity.security.Parameters"/> 
+    <mapping class="com.tradecoach.patenter.entity.security.TransactionData"/> 
+    <mapping class="com.tradecoach.patenter.entity.security.Portfolio"/> 
+    <mapping class="com.tradecoach.patenter.entity.security.CandleSticks"/> 
+    <mapping class="com.tradecoach.patenter.entity.security.CandleStick"/> 
 </session-factory>
 </hibernate-configuration>

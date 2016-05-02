@@ -19,7 +19,7 @@ import javax.swing.text.TabSet;
 import javax.swing.text.TabStop;
 
 import com.oracle.tutorial.jdbc.Tables;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
 import com.oracle.tutorial.jdbc.Tables.Columns;;
 
 	public class TableParentModel extends DefaultTableModel  {
@@ -87,7 +87,7 @@ import com.oracle.tutorial.jdbc.Tables.Columns;;
 			this.data = data;
 		}
 		
-		public Portfolios getBelongsToPortfolios() {
+		public PortfoliosGroup getBelongsToPortfolios() {
 			return this.getTableInstance().getBelongsTo();
 		}
 

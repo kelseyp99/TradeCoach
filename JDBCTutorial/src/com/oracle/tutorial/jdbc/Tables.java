@@ -24,7 +24,6 @@ import com.gui.*;
 import com.oracle.tutorial.jdbc.Tables.Columns;
 import com.tradecoach.patenter.entity.security.CandleStick;
 import com.tradecoach.patenter.entity.security.CandleSticks;
-import com.tradecoach.patenter.entity.security.SecurityInst;
 import com.utilities.GlobalVars;
 
 import javax.swing.AbstractButton;
@@ -45,9 +44,10 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
+import com.workers.SecurityInst;
 import com.workers.Tools;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
 
 public  class Tables {
 	protected String dbName;
@@ -58,13 +58,13 @@ public  class Tables {
 	private TableParentModel tabelModel;
 	private JTable tableGUI;
 	private ArrayList<Columns> tableMap = new ArrayList<Columns>();
-	private Portfolios belongsTo;
+	private PortfoliosGroup belongsTo;
 	private int rowCount;
 	private ArrayList<String> ddlCreates, ddlCreateTriggers, ddlCreateFKs;
 	
 	public Tables(){};
 
-	public Tables(Connection connArg, String dbNameArg, String dbmsArg, Portfolios belongsTo, String tableName) {
+	public Tables(Connection connArg, String dbNameArg, String dbmsArg, PortfoliosGroup belongsTo, String tableName) {
 		super();
 		this.con = connArg;
 		this.dbName = dbNameArg;
@@ -72,24 +72,30 @@ public  class Tables {
 		this.setBelongsTo(belongsTo);
 		this.tableName = tableName;		
 	}
+	public Tables(PortfoliosGroup belongsTo, String tableName) {
+		super();
+		this.setBelongsTo(belongsTo);
+		this.tableName = tableName;		
+	}
+
 	public void initialize(String ddlCreate) {
-		try {
-			this.createIfMissing(ddlCreate);
+	/*	try {
+	//		this.createIfMissing(ddlCreate);
 			//System.out.println(ddlCreate);
 			this.runRowCount();
 		} catch (SQLException e) {
 			
 			e.printStackTrace();
-		}
+		}*/
 	}	
 	public void initialize() {
-		try {
-			this.createIfMissing();
+//		try {
+		//	this.createIfMissing();
 		//	System.out.println(this.getDdlCreates().toString());
-			this.runRowCount();
-		} catch (SQLException e) {			
-			e.printStackTrace();
-		}
+	//		this.runRowCount();
+	//	} catch (SQLException e) {			
+	//		e.printStackTrace();
+	//	}
 	}	
 	public void initSelectColumn(){
 		TableColumn tc = this.getTableGUI().getColumnModel().getColumn(0);
@@ -495,11 +501,11 @@ public  class Tables {
 		  }
 	}
 
-	public Portfolios getBelongsTo() {
+	public PortfoliosGroup getBelongsTo() {
 		return belongsTo;
 	}
 
-	public void setBelongsTo(Portfolios belongsTo) {
+	public void setBelongsTo(PortfoliosGroup belongsTo) {
 		this.belongsTo = belongsTo;
 	}
 

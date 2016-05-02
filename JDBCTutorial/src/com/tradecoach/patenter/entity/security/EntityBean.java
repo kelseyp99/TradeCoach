@@ -1,6 +1,8 @@
 package com.tradecoach.patenter.entity.security;
 
-	public class EntityBean<T> {
+import com.workers.SecurityInst;
+
+public class EntityBean<T> {
 	private Class<T> classType;
 	private SecurityInst partOf;
 	public EntityBean() {

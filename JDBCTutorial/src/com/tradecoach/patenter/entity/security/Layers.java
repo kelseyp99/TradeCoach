@@ -3,8 +3,9 @@ package com.tradecoach.patenter.entity.security;
 import java.util.Stack;
 
 import com.utilities.GlobalVars;
-import com.workers.Portfolios;
-import com.workers.Portfolios.Pcts4Lyer;
+import com.workers.PortfoliosGroup;
+import com.workers.SecurityInst;
+import com.workers.PortfoliosGroup.Pcts4Lyer;
 
 public class Layers implements GlobalVars {	
 	private Layers NextLayer, PriorLayer;

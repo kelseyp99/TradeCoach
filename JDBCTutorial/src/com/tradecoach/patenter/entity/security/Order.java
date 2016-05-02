@@ -4,7 +4,8 @@ import com.gui.GUI;
 import com.utilities.*;
 import com.workers.MoneyMgmtStrategy;
 import com.workers.Portfolio;
-import com.workers.Portfolios;
+import com.workers.PortfoliosGroup;
+import com.workers.SecurityInst;
 import com.workers.Tools;
 import org.joda.time.DateTime;
 
@@ -420,7 +421,7 @@ public Order getDummyOrder() {
 	protected Portfolio getBelongsToPortfolio() {
 		return this.getBelongsTo().getBelongsTo();
 	}
-	protected Portfolios getBelongsToPortfolios() {
+	protected PortfoliosGroup getBelongsToPortfolios() {
 		return this.getBelongsToPortfolio().getBelongsTo();
 	}
 	protected GUI getBelongsToGUI() {
